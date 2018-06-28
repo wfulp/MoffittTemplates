@@ -1,0 +1,298 @@
+---
+title: "Title of Your Submission"
+shorttitle: "Short Title"
+from:
+ - name: FirstNameA LastNameA
+   email: foo@bar.com
+   contact: yes
+ - name: FirstNameB LastNameB
+to:
+ - name: FirstNameA LastNameA
+ - name: FirstNameB LastNameB
+ - name: FirstNameC LastNameC
+cc:
+ - name: FirstNameA LastNameA
+ - name: FirstNameB LastNameB
+includesummary: no
+summary: 
+  A short summary about your report. 
+bibliography: bibliography.bib
+lof: yes
+lot: yes
+toc: yes
+output: MoffittTemplates::pdf_report
+---
+
+
+```{r echo=FALSE, eval=TRUE, warning = FALSE}
+
+# Load necessary packages
+# More options could be added later in the template
+suppressPackageStartupMessages({
+  library(knitr)
+  library(ggplot2)
+  library(grid)
+  library(reshape2)
+  library(devtools)
+  library(xtable)
+  library(data.table)
+  library(tidyverse)
+})
+
+# Set some knitr options
+# This will always generate two figures (pdf and png, which can be handy for presentations)
+opts_chunk$set(tidy = TRUE, cache = FALSE, messages = FALSE, warning = FALSE, echo = FALSE, dev = c("png", "pdf"), dpi = 200)
+
+# Create a theme
+# This can be overloaded with other options
+moffitt_theme <- theme(legend.position = "bottom", legend.margin = margin(unit = "cm"))
+#Need to set xtable comment = FALSE for printing
+options(xtable.comment = FALSE, datatable.verbose = FALSE, scipen = 10)   
+
+```
+
+```{r data_process, eval=FALSE}
+#loading data
+data(mtcars)
+
+#data processing
+```
+
+# Summary of Main Results
+
+Summarize the findings of the report. Include specific comparisons and references to corresponding figures and tables.
+
+
+# Background
+
+Outline the study schema/schedule, study groups, time points, etc. 
+
+# Objectives
+
+List primary and secondary (if applicable) objectives. 
+
+# Endpoints
+
+## Biological endpoints
+
+Describe the lab measures of interest and the antigens/isolates tested. 
+
+## Statistical endpoints
+
+Describe the statistical measures of interest (overall survival, response, response magnitude, etc.).
+
+# Lab Methods
+
+Describe the lab methods and sample inclusion criteria. 
+
+# Statistical Methods
+
+## Graphical analysis
+
+Update the following section as appropriate for your data.
+
+Response rates were plotted, with accompanying Wilson score confidence intervals, for each group, antigen, and study time point. Distributions of response magnitude were plotted on the log scale for each group, antigen, and study time point with box plots superimposed on the distribution of responders. The mid-line of the box denotes the median and the ends of the box denote the $25^{th}$ and $75^{th}$ percentiles. The whiskers denote the most extreme data points that were no more than 1.5 times the interquartile range (i.e., height of the box). To show response trend over time, line plots of response magnitude were plotted on the log scale by study group and antigen across time points.
+
+## Statistical tests
+
+Update the following section as appropriate for your data. 
+
+To assess if two groups have different response rates, pairwise group comparisons were conducted using Fisher’s exact test for each time point and antigen. For comparisons across time, McNemar's test were used to account for paired data. Response magnitude comparisons between experimental groups were compared using the Wilcoxon rank-sum test among responders only. Response magnitude comparisons between time points were performed using the Wilcoxon signed-rank test to account for paired data. To be included in the time point comparisons, a participant must be a responder in at least one of the time points. 
+
+The Wilcoxon tests are rank-based tests used to account for non-normality in the magnitude measurements. Because response magnitude comparisons were performed on responders only, each group must have at least 3 responders for the comparison to be conducted. 
+
+# Participant Cohort
+
+Summarize the data by antigen/isolate, time point, and study group. Discuss expected vs. observed sample size. Consider including a summary table.
+
+# Results
+
+Summarize the statistical analyses performed.
+
+## Section 1
+
+Consider breaking up the results section by objective or by statistical endpoint.
+
+## Section 2
+
+Make sure to include p-values and references to relevant tables and figures. See Figure \ref{fig:example_fig} and Table \ref{tab:example_tab}. 
+
+# Figures and Tables
+
+\clearpage
+
+```{r example_plot,fig.height = 4, fig.cap= "A simple figure with a descriptive caption including information about both axes, groups/time points/antigens included, any legend information, etc. \\label{fig:example_fig}", fig.scap = "Shorter caption for table of contents.", fig.align="center"}
+
+library(ggplot2)
+qplot(1:10,rnorm(10))
+```
+
+
+
+```{r results="asis"}
+kable(mtcars, format = "latex", caption = "A simple table \\label{tab:example_tab}")
+```
+
+\clearpage 
+
+```{r session_info_table, results = 'asis'}
+
+# get username
+getUsername <- function(id=NULL){
+  switch(Sys.info()[['sysname']],
+    Windows = {
+      if(is.null(id)){id <- Sys.getenv("USERNAME")}
+      myargs <- paste("user /domain", id)
+      user <- tryCatch({system2(command="net", args=myargs, stdout=TRUE)},
+                       warning=function(w){NULL},
+                       error=function(e){NULL})
+      user <- gsub("Full Name\ *", "", user[grepl("FULL NAME", toupper(user))])
+      if(length(user)>0){
+        user <- paste(strsplit(gsub(",", "", user), " ")[[1]][c(2, 1)], collapse=" ")
+      } else {
+        stop("No userid ", id, " was found.")
+      }
+    },
+    Linux   = {
+      if(is.null(id)){id <- Sys.getenv("USER")}
+      myargs <- paste0("-x -h ldapint.pc.scharp.org -b dc=scharp,dc=org uid=", id)
+      user <- system2("ldapsearch", args = myargs, stdout=TRUE)
+      user <- user[grep("cn:", user)]
+      if(length(user)>0){
+        user <- gsub("[a-z]+: ", "", user)
+      } else {
+        stop("No userid ", id, " was found.")
+      }
+    },
+    Darwin  = {
+      if(is.null(id)){id <- Sys.getenv("USER")}
+      myargs <- paste0("-x -h ldapint.pc.scharp.org -b dc=scharp,dc=org uid=", id)
+      user <- system2("ldapsearch", args = myargs, stdout=TRUE)
+      user <- user[grep("cn:", user)]
+      if(length(user)>0){
+        user <- gsub("[a-z]+: ", "", user)
+      } else {
+        stop("No userid ", id, " was found.")
+      }
+    }
+  )
+
+  return(user)
+}
+username <- ifelse(getUsername()=="0 Success", Sys.getenv("USER"), getUsername())
+
+# loading in rmarkdown so we can capture verison number
+if (any(installed.packages()[,1] == 'rmarkdown')) library(rmarkdown)
+
+my_session_info <- devtools::session_info()
+
+platform <- my_session_info[[1]]
+packages <- my_session_info[[2]]
+
+# TABLE 1
+my_session_info1 <- data.table::data.table(
+  name = names(platform),
+  value = matrix(unlist(platform), nrow = length(platform)))
+
+my_current_input <- ifelse(is.null(ci <- knitr::current_input()), 'No Input File Detected', ci)
+
+file_name <-  data.table::data.table(
+  name = 'file name',
+  value = my_current_input)
+
+# Add user info
+user_info <- data.table::data.table(
+  name = 'user',
+  value = username)
+
+gitremote <-  substr(remote <- system("git remote -v", intern = TRUE)[1],
+                     regexpr("\t", remote) + 1,
+                     regexpr(" ", remote) - 1)
+
+if (is.na(gitremote) | gitremote == "") {
+  # No Remote Connection, so just give absolute path
+  folder_info <- data.table(
+    name = 'location',
+    value = getwd())
+  my_session_info1 <- data.table::rbindlist(list(my_session_info1, folder_info, file_name, user_info))
+} else{
+  # Git Remote connection, so getting url and path
+  all_git_files <- system('git ls-files -co --no-empty-directory --full-name', intern = TRUE)
+  folder_info_in <- sub(paste0('/', my_current_input), '',
+                        all_git_files[grep(my_current_input, all_git_files)])
+
+  if(length(folder_info_in)==0){
+    folder_info_in <- 'No Location Detected'
+  } else {
+    folder_info_in <- folder_info_in[sapply(folder_info_in,
+                                            function(x){length(grep(x, getwd())) == 1})]
+    }
+  
+  # Dropping matching file names that do not match folder path
+  folder_info <- data.table::data.table(
+    name = 'location',
+    value = folder_info_in)
+  url_info <- data.table::data.table(
+    name = 'repo',
+    value = gitremote)
+  
+  my_session_info1 <- data.table::rbindlist(list(my_session_info1, url_info, folder_info, file_name, user_info))
+}
+
+xtab <- xtable(x = my_session_info1,
+               caption = 'Supplemental Table: Reproducibility Software Session Information',
+               label = 'session_info')
+print(xtab, include.rownames = FALSE, include.colnames = FALSE, size = "\\footnotesize")
+
+
+# TABLE 2
+my_session_info2 <- data.table::data.table(
+  matrix(unlist(packages), ncol = length(packages))
+  )[V2=='*'][, V2 := NULL] # Only want attached packages
+data.table::setnames(my_session_info2, c(paste('V', c(1, 3, 4, 5), sep = '')), names(packages)[-2])
+
+# Adding in Data Versions
+if(nrow(my_session_info2)>0){
+  my_session_info2[, data.version := as.character(packageDescription(package, fields = 'DataVersion')), by = package]
+}
+
+if(my_session_info2[, all(is.na(data.version))]){
+  my_session_info2 <- my_session_info2[, .(package, version, date, source)]
+} else {
+  my_session_info2[is.na(data.version), data.version := '']
+  setcolorder(my_session_info2, c('package', 'version', 'data.version', 'date', 'source'))
+}
+
+# if this is a vignette in a package, add the data package without loading it
+if(grepl("vignettes", getwd()) & file.exists('../DESCRIPTION')){
+  thisRow <- my_session_info2[1]
+  rd <- roxygen2:::read.description("../DESCRIPTION")
+  thisRow[,
+          `:=`(package = rd$Package,
+               version = rd$Version,
+               `data version` = rd$DataVersion,
+               date = rd$Date,
+               source = url_info$value)]
+
+# if local repo path is too long, break it into two lines
+# (this assumes that it doesn't need to wrap to 3 lines)
+if(nchar(thisRow$source) > 60){
+  slashes <- gregexpr("/", thisRow$source, fixed=TRUE)[[1]]
+  p1 <- substr(thisRow$source, 1, slashes[which(slashes>30)][1])
+  p2 <- substr(thisRow$source, slashes[which(slashes>30)][1]+1, 500)
+  newsource <- gsub("_", "\\_", paste0(p1, " \\\\ \n", p2), fixed=TRUE)
+  thisRow$source <- paste0("\\parbox[t]{3in}{", newsource, "}")
+}
+
+my_session_info2 <- rbindlist(list(my_session_info2, thisRow), use.names=TRUE, fill=TRUE)
+setcolorder(my_session_info2, c('package', 'version', 'data version', 'date', 'source'))
+}
+
+xtab <- xtable(x = my_session_info2, caption = 'Supplemental Table: Reproducibility Software Package Version Information', label = 'session_info2')
+print(xtab, include.rownames = FALSE, size = "\\footnotesize", sanitize.text.function=function(x){x})
+```
+
+
+\clearpage 
+
+# References

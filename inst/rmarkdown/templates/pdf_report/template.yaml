@@ -1,0 +1,5 @@
+name: Moffitt PDF report
+description: >
+ Template for creating a Moffitt PDF report
+create_dir: true
+

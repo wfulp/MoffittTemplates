@@ -1,0 +1,14 @@
+Package: MoffittTemplates
+Type: Package
+Title: A report template for Moffitt Biostat
+Version: 0.1
+Date: 2018-06-27
+Author: William "Jimmy" Fulp
+Maintainer: William "Jimmy" Fulp <william.fulp@moffitt.org>
+Description: MoffittTemplates -- Moffitt Biostat
+License: What license is it under?
+Collate: utils.R
+  pdf_report.R
+Imports:
+    rmarkdown
+RoxygenNote: 6.0.1
