@@ -1,0 +1,5 @@
+name: Moffitt Word report
+description: >
+ Template for creating a Moffitt Word report
+create_dir: true
+

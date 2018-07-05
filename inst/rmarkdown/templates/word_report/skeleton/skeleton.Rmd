@@ -1,0 +1,300 @@
+---
+title: "Title of Your Submission"
+author: 'Author(s) Here'
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: 
+  bookdown::word_document2:
+    toc: true
+    fig_caption: yes
+    fig_height: 7
+    fig_width: 6
+    reference_docx: word-styles-reference.docx
+bibliography: bibliography.bib
+---
+
+```{r echo=FALSE, eval=TRUE, warning = FALSE}
+
+# Load necessary packages
+# More options could be added later in the template
+suppressPackageStartupMessages({
+  library(knitr)
+  library(ggplot2)
+  library(kableExtra)
+  #library(data.table)
+  library(tidyverse)
+})
+
+# Set some knitr options
+# This will always generate two figures (pdf and png, which can be handy for presentations)
+opts_chunk$set(tidy = TRUE, cache = FALSE, messages = FALSE, warning = FALSE, echo = FALSE, dev = c("png", "pdf"), dpi = 200)
+
+# Create a theme
+# This can be overloaded with other options
+moffitt_theme <- theme(legend.position = "bottom", legend.margin = margin(unit = "cm"))
+#Need to set xtable comment = FALSE for printing
+options(xtable.comment = FALSE, datatable.verbose = FALSE, scipen = 10)   
+
+```
+
+```{r data process, eval=FALSE}
+#loading data
+data(mtcars)
+
+#data processing
+```
+
+## Summary of Main Results
+
+Summarize the findings of the report. Include specific comparisons and references to corresponding figures and tables.
+
+
+## Background
+
+Outline the study schema/schedule, study groups, time points, etc. 
+
+## Objectives
+
+List primary and secondary (if applicable) objectives. 
+
+## Endpoints
+
+### Biological endpoints
+
+Describe the lab measures of interest and the samples or subjects being tested. 
+
+### Statistical endpoints
+
+Describe the statistical measures of interest (overall survival, response, response magnitude, etc.).
+
+## Lab Methods
+
+Describe the lab methods and sample inclusion criteria. 
+
+## Statistical Methods
+
+### Graphical analysis
+
+Update the following section as appropriate for your data.
+
+### Statistical tests
+
+Update the following section as appropriate for your data. 
+
+## Participant Cohort
+
+Summarize the sample size. Discuss expected vs. observed sample size if applicable. Consider including a summary table.
+
+## Results
+
+Summarize the statistical analyses performed.
+
+### Section 1
+
+
+### Section 2
+
+
+Testing reference @Huang:2013fl
+
+Note "#####" gives a page break
+
+
+Testing Label testing here: See Figure \@ref(fig:example-plot) and Table \@ref(tab:example-table). 
+
+## Figures and Tables
+
+
+```{r example-plot, fig.cap= "A simple figure with a descriptive caption including information about both axes, groups/time points/antigens included, any legend information, etc.", fig.scap = "Shorter caption for table of contents."}
+
+library(ggplot2)
+qplot(1:10,rnorm(10))
+```
+
+#####
+
+
+```{r example-table}
+kable(mtcars, format = "pandoc", caption = "A simple table")
+```
+
+
+#####
+
+
+```{r session1-info-table}
+
+# get username
+getUsername <- function(id=NULL){
+  switch(Sys.info()[['sysname']],
+    Windows = {
+      if (is.null(id)) {id <- Sys.getenv("USERNAME")}
+      myargs <- paste("user /domain", id)
+      user <- tryCatch({system2(command = "net", args = myargs, stdout = TRUE)},
+                       warning = function(w){NULL},
+                       error = function(e){NULL})
+      user <- gsub("Full Name\ *", "", user[grepl("FULL NAME", toupper(user))])
+      if (length(user) > 0) {
+        user <- paste(strsplit(gsub(",", "", user), " ")[[1]][c(2, 1)], collapse = " ")
+      } else {
+        stop("No userid ", id, " was found.")
+      }
+    },
+    Linux   = {
+      if (is.null(id)) {id <- Sys.getenv("USER")}
+      
+      #Can't get user name to populate in Mac or Linux
+      user <- id
+      # myargs <- paste0("-x -h mcc_ldap.hlm.ad.moffitt.usf.edu -b dc=hlm,dc=ad,dc=moffitt,dc=usf,dc=edu uid=", id)
+      # user <- system2("ldapsearch", args = myargs, stdout=TRUE)
+      # user <- user[grep("cn:", user)]
+      # if(length(user)>0){
+      #   user <- gsub("[a-z]+: ", "", user)
+      # } else {
+      #   stop("No userid ", id, " was found.")
+      # }
+    },
+    Darwin  = {
+      if (is.null(id)) {id <- Sys.getenv("USER")}
+      user <- id
+      #Can't get user name to populate in Mac or Linux
+      # myargs <- paste0("-x -h mcc_ldap.hlm.ad.moffitt.usf.edu -b dc=hlm,dc=ad,dc=moffitt,dc=usf,dc=edu uid=", id)
+      # user <- system2("ldapsearch", args = myargs, stdout=TRUE)
+      # user <- user[grep("cn:", user)]
+      # if(length(user)>0){
+      #   user <- gsub("[a-z]+: ", "", user)
+      # } else {
+      #   stop("No userid ", id, " was found.")
+      # }
+    }
+  )
+
+  return(user)
+}
+username <- ifelse(getUsername() == "0 Success", Sys.getenv("USER"), getUsername())
+
+# loading in rmarkdown so we can capture verison number
+if (any(installed.packages()[,1] == 'rmarkdown')) library(rmarkdown)
+
+my_session_info <- devtools::session_info()
+
+platform <- my_session_info[[1]]
+packages <- my_session_info[[2]]
+
+# TABLE 1
+my_session_info1 <- data.frame(
+  name = names(platform),
+  value = matrix(unlist(platform), nrow = length(platform)), 
+  stringsAsFactors = FALSE)
+
+my_current_input <- ifelse(is.null(ci <- knitr::current_input()), 'No Input File Detected', ci)
+
+file_name <-  data.frame(
+  name = 'file name',
+  value = my_current_input,
+  stringsAsFactors = FALSE)
+
+# Add user info
+user_info <- data.frame(
+  name = 'user',
+  value = username,
+  stringsAsFactors = FALSE)
+
+gitremote <-  substr(remote <- system("git remote -v", intern = TRUE)[1],
+                     regexpr("\t", remote) + 1,
+                     regexpr(" ", remote) - 1)
+
+if (is.na(gitremote) | gitremote == "") {
+  # No Remote Connection, so just give absolute path
+  folder_info <- data.frame(
+    name = 'location',
+    value = getwd(),
+  stringsAsFactors = FALSE)
+  my_session_info1 <- rbind(my_session_info1, folder_info, file_name, user_info)
+} else{
+  # Git Remote connection, so getting url and path
+  all_git_files <- system('git ls-files -co --no-empty-directory --full-name', intern = TRUE)
+  folder_info_in <- sub(paste0('/', my_current_input), '',
+                        all_git_files[grep(my_current_input, all_git_files)])
+
+  if (length(folder_info_in) == 0) {
+    folder_info_in <- 'No Location Detected'
+  } else {
+    folder_info_in <- folder_info_in[sapply(folder_info_in,
+                                            function(x){length(grep(x, getwd())) == 1})]
+    }
+  
+  # Dropping matching file names that do not match folder path
+  folder_info <- data.frame(
+    name = 'location',
+    value = folder_info_in,
+  stringsAsFactors = FALSE)
+  url_info <- data.frame(
+    name = 'repo',
+    value = gitremote,
+  stringsAsFactors = FALSE)
+  
+  my_session_info1 <- rbind(my_session_info1, url_info, folder_info, file_name, user_info)
+}
+
+kable(my_session_info1, 'pandoc', row.names = F, booktabs = TRUE, linesep = '', caption = "Supplemental Table: Reproducibility Software Session Information")
+
+```
+
+<br><br> 
+
+```{r session2-info-table, results = 'asis'}
+
+
+# TABLE 2
+my_session_info2_pre <- data.frame(
+  matrix(unlist(packages), ncol = length(packages)),
+  stringsAsFactors = FALSE)
+my_session_info2 <- my_session_info2_pre[my_session_info2_pre$X2 == '*',][, -2] # Only want attached packages
+names(my_session_info2) <- names(packages)[-2]
+
+# Adding in Data Versions
+if (nrow(my_session_info2) > 0) {
+  for (i in 1:nrow(my_session_info2)) {
+    my_session_info2$data.version[i] <- as.character(packageDescription(my_session_info2$package[i], fields = 'DataVersion'))
+  }
+}
+
+if (all(is.na(my_session_info2$data.version))) {
+  my_session_info2 <- my_session_info2[, c('package', 'version', 'date', 'source')]
+} else {
+  is.na(my_session_info2$data.version) <- ''
+  my_session_info2 <- my_session_info2[, c('package', 'version', 'data.version', 'date', 'source')]
+}
+
+# if this is a vignette in a package, add the data package without loading it
+if (grepl("vignettes", getwd()) & file.exists('../DESCRIPTION')) {
+  thisRow <- my_session_info2[1, ,drop = FALSE]
+  rd <- roxygen2:::read.description("../DESCRIPTION")
+  thisRow <- data.frame(package = rd$Package,
+               version = rd$Version,
+               `data version` = rd$DataVersion,
+               date = rd$Date,
+               source = url_info$value,
+               stringsAsFactors = FALSE)
+
+# if local repo path is too long, break it into two lines
+# (this assumes that it doesn't need to wrap to 3 lines)
+if (nchar(thisRow$source) > 60) {
+  slashes <- gregexpr("/", thisRow$source, fixed = TRUE)[[1]]
+  p1 <- substr(thisRow$source, 1, slashes[which(slashes > 30)][1])
+  p2 <- substr(thisRow$source, slashes[which(slashes > 30)][1] + 1, 500)
+  newsource <- gsub("_", "\\_", paste0(p1, " \\\\ \n", p2), fixed = TRUE)
+  thisRow$source <- paste0("\\parbox[t]{3in}{", newsource, "}")
+}
+
+my_session_info2 <- rbind(my_session_info2, thisRow)
+my_session_info2 <- my_session_info2[, c('package', 'version', 'data.version', 'date', 'source')]
+}
+
+kable(my_session_info2, 'pandoc', row.names = F, booktabs = TRUE, linesep = '', caption = "Supplemental Table: Reproducibility Software Package Version Information")
+
+```
+
+#####
+
+## References
