@@ -94,7 +94,7 @@ Describe the statistical results.
 ### Section 2
 
 
-Testing reference @Huang:2013fl
+Testing reference (@Huang:2013fl)
 
 Note "#####" gives a page break
 

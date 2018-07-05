@@ -105,7 +105,7 @@ Consider breaking up the results section by objective or by statistical endpoint
 
 ## Section 2
 
-Testing reference @Huang:2013fl
+Testing reference (@Huang:2013fl)
 
 Testing Label testing here: See Figure \ref{fig:example_fig} and Table \ref{tab:example_tab}. 
 
