@@ -86,7 +86,7 @@ Summarize the sample size. Discuss expected vs. observed sample size if applicab
 
 ## Results
 
-Summarize the statistical analyses performed.
+Describe the statistical results.
 
 ### Section 1
 
