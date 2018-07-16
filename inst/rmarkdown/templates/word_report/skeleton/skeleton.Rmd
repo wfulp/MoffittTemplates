@@ -36,7 +36,7 @@ options(xtable.comment = FALSE, datatable.verbose = FALSE, scipen = 10)
 
 ```
 
-```{r data process, eval=FALSE}
+```{r data process, eval=TRUE}
 #loading data
 data(mtcars)
 
