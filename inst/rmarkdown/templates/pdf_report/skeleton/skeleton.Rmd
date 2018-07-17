@@ -9,6 +9,7 @@ from:
 to:
  - name: FirstNameA LastNameA
  - name: FirstNameB LastNameB
+includecc: no
 cc:
  - name: FirstNameA LastNameA
  - name: FirstNameB LastNameB
