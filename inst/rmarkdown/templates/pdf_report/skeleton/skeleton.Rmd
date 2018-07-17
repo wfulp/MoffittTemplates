@@ -243,7 +243,7 @@ if (is.na(gitremote) | gitremote == "") {
   my_session_info1 <- rbind(my_session_info1, url_info, folder_info, file_name, user_info)
 }
 
-kable(my_session_info1, 'latex', row.names = F, booktabs = TRUE, linesep = '', caption = "Supplemental Table: Reproducibility Software Session Information \\label{tab:session_info}")
+kable(my_session_info1, 'latex', row.names = F, booktabs = TRUE, linesep = '', caption = "Supplemental Table: Reproducibility Software Session Information \\label{tab:session_info}") %>% kable_styling(font_size = 7)
 
 
 # TABLE 2
@@ -292,7 +292,7 @@ my_session_info2 <- rbind(my_session_info2, thisRow)
 my_session_info2 <- my_session_info2[, c('package', 'version', 'data.version', 'date', 'source')]
 }
 
-kable(my_session_info2, 'latex', row.names = F, booktabs = TRUE, linesep = '', caption = "Supplemental Table: Reproducibility Software Package Version Information \\label{tab:session_info2}")
+kable(my_session_info2, 'latex', row.names = F, booktabs = TRUE, linesep = '', caption = "Supplemental Table: Reproducibility Software Package Version Information \\label{tab:session_info2}") %>% kable_styling(font_size = 7)
 
 ```
 
