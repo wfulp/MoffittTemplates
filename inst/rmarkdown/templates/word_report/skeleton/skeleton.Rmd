@@ -26,7 +26,7 @@ suppressPackageStartupMessages({
 
 # Set some knitr options
 # This will always generate two figures (pdf and png, which can be handy for presentations)
-opts_chunk$set(tidy = TRUE, cache = FALSE, messages = FALSE, warning = FALSE, echo = FALSE, dev = c("png", "pdf"), dpi = 200)
+opts_chunk$set(tidy = TRUE, cache = FALSE, messages = TRUE, warning = TRUE, echo = FALSE, dev = c("png", "pdf"), dpi = 200)
 
 # Create a theme
 # This can be overloaded with other options
