@@ -246,10 +246,7 @@ kable(my_session_info1, 'pandoc', row.names = F, booktabs = TRUE, linesep = '', 
 
 
 # TABLE 2
-my_session_info2_pre <- data.frame(
-  matrix(unlist(packages), ncol = length(packages)),
-  stringsAsFactors = FALSE)
-my_session_info2 <- my_session_info2_pre[my_session_info2_pre$X2 == '*',][, -2] # Only want attached packages
+my_session_info2 <- packages[packages$`*` == '*', -2]  # Only want attached packages
 names(my_session_info2) <- names(packages)[-2]
 
 # Adding in Data Versions
