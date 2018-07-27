@@ -12,16 +12,17 @@ output:
 bibliography: bibliography.bib
 ---
 
-```{r echo=FALSE, eval=TRUE, warning = FALSE}
+```{r echo=FALSE, eval=TRUE, include = FALSE}
 
-# Load necessary packages
-# More options could be added later in the template
-suppressPackageStartupMessages({
-  library(knitr)
-  library(ggplot2)
-  library(kableExtra)
-  #library(data.table)
-  library(tidyverse)
+### Add additional packages needed here
+packages = c("knitr","kableExtra","ggplot2","dplyr")
+
+#if a package is installed, it will be loaded
+#if any are not, the missing package(s) will be installed and loaded
+package.check <- lapply(packages, FUN = function(x) {
+  if (!require(x, character.only = TRUE)) 
+    install.packages(x, dependencies = TRUE,repos = "http://cran.us.r-project.org")
+  library(x, character.only = TRUE)
 })
 
 # Set some knitr options
