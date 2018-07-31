@@ -9,6 +9,7 @@ output:
     fig_height: 7
     fig_width: 6
     reference_docx: word-styles-reference.docx
+    keep_md: true
 bibliography: bibliography.bib
 ---
 
