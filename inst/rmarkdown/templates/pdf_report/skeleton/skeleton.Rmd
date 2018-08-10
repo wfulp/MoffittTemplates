@@ -183,6 +183,8 @@ username <- ifelse(getUsername() == "0 Success", Sys.getenv("USER"), getUsername
 
 # loading in rmarkdown so we can capture verison number
 if (any(installed.packages()[,1] == 'rmarkdown')) suppressWarnings(library(rmarkdown))
+# loading in MoffittTemplates so we can capture verison number
+if (any(installed.packages()[,1] == 'MoffittTemplates')) suppressWarnings(library(MoffittTemplates))
 
 my_session_info <- devtools::session_info()
 
