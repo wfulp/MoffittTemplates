@@ -34,7 +34,7 @@ opts_chunk$set(tidy = TRUE, cache = FALSE, messages = TRUE, warning = TRUE, echo
 # This can be overloaded with other options
 moffitt_theme <- theme(legend.position = "bottom", legend.margin = margin(unit = "cm"))
 #Need to set xtable comment = FALSE for printing
-options(xtable.comment = FALSE, datatable.verbose = FALSE, scipen = 10, knitr.kable.NA = '')   
+options(xtable.comment = FALSE, datatable.verbose = FALSE, scipen = 10, knitr.kable.NA = '', knitr.table.format = 'pandoc')   
 
 ```
 
