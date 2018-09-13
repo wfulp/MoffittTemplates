@@ -220,6 +220,9 @@ $endif$
 \patchcmd{\footrule}{\hrule}{\color{gray}\hrule}{}{}
 \makeatother
 
+$if(longtoc)$
+\clearpage
+$endif$
 
 $if(includesummary)$
 \begin{abstract}
@@ -229,6 +232,9 @@ $endif$
 
 $if(lof)$
 \listoffigures
+$endif$
+
+$if(lot)$
 \listoftables
 $endif$
 

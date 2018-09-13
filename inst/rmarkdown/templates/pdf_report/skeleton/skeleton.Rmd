@@ -20,6 +20,7 @@ bibliography: bibliography.bib
 lof: yes
 lot: yes
 toc: yes
+longtoc: no
 output: MoffittTemplates::pdf_report
 ---
 
