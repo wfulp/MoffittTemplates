@@ -125,8 +125,8 @@ qplot(1:10,rnorm(10))
 
 
 
-```{r results="asis"}
-kable(mtcars, format = "latex", caption = "A simple table \\label{tab:example_tab}")
+```{r example_tab, results="asis"}
+kable(mtcars, format = "latex", caption = "A simple table")
 ```
 
 \clearpage 
@@ -248,8 +248,11 @@ if (is.na(gitremote) | gitremote == "") {
   my_session_info1 <- rbind(my_session_info1, url_info, folder_info, file_name, user_info)
 }
 
-kable(my_session_info1, 'latex', row.names = F, booktabs = TRUE, linesep = '', caption = "Supplemental Table: Reproducibility Software Session Information \\label{tab:session_info}") %>% kable_styling(font_size = 7)
+kable(my_session_info1, 'latex', row.names = F, booktabs = TRUE, linesep = '', caption = "Supplemental Table: Reproducibility Software Session Information") %>% kable_styling(font_size = 7)
 
+```
+
+```{r session_info2, results = 'asis'}
 
 # TABLE 2
 my_session_info2 <- packages[packages$`*` == '*', -2] # Only want attached packages
@@ -294,7 +297,7 @@ my_session_info2 <- rbind(my_session_info2, thisRow)
 my_session_info2 <- my_session_info2[, c('package', 'version', 'data.version', 'date', 'source')]
 }
 
-kable(my_session_info2, 'latex', row.names = F, booktabs = TRUE, linesep = '', caption = "Supplemental Table: Reproducibility Software Package Version Information \\label{tab:session_info2}") %>% kable_styling(font_size = 7)
+kable(my_session_info2, 'latex', row.names = F, booktabs = TRUE, linesep = '', caption = "Supplemental Table: Reproducibility Software Package Version Information") %>% kable_styling(font_size = 7)
 
 ```
 
