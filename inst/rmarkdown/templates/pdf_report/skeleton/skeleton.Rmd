@@ -33,8 +33,12 @@ packages = c("knitr","kableExtra","ggplot2","dplyr")
 #if a package is installed, it will be loaded
 #if any are not, the missing package(s) will be installed and loaded
 package.check <- lapply(packages, FUN = function(x) {
-  if (!require(x, character.only = TRUE)) 
+  if (!require(x, character.only = TRUE)) {
+    if (x == 'MoffittFunctions')
+      stop('The package "MoffittFunctions" must be installed through GitLab: git@gitlab.moffitt.usf.edu:ReproducibleResearch/MoffittFunctions.git')
+    
     install.packages(x, dependencies = TRUE,repos = "http://cran.us.r-project.org")
+  }
   library(x, character.only = TRUE)
 })
 
