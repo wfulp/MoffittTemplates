@@ -259,22 +259,25 @@ kable(my_session_info1, 'latex', row.names = F, booktabs = TRUE, linesep = '', c
 ```{r session_info2, results = 'asis'}
 
 # TABLE 2
-my_session_info2 <- packages[packages$`*` == '*', -2] # Only want attached packages
-names(my_session_info2) <- names(packages)[-2]
-
-# Adding in Data Versions
-if (nrow(my_session_info2) > 0) {
-  for (i in 1:nrow(my_session_info2)) {
-    my_session_info2$data.version[i] <- as.character(packageDescription(my_session_info2$package[i], fields = 'DataVersion'))
-  }
-}
-
-if (all(is.na(my_session_info2$data.version))) {
-  my_session_info2 <- my_session_info2[, c('package', 'version', 'date', 'source')]
-} else {
-  is.na(my_session_info2$data.version) <- ''
-  my_session_info2 <- my_session_info2[, c('package', 'version', 'data.version', 'date', 'source')]
-}
+my_session_info2 <- packages[packages$attached,] # Only want attached packages
+my_session_info2 <- data.frame(package = my_session_info2$package, 
+                               version = my_session_info2$loadedversion, 
+                               date = my_session_info2$date, 
+                               my_session_info2$source) 
+# 
+# # Adding in Data Versions
+# if (nrow(my_session_info2) > 0) {
+#   for (i in 1:nrow(my_session_info2)) {
+#     my_session_info2$data.version[i] <- as.character(packageDescription(my_session_info2$package[i], fields = 'DataVersion'))
+#   }
+# }
+# 
+# if (all(is.na(my_session_info2$data.version))) {
+#   my_session_info2 <- my_session_info2[, c('package', 'version', 'date', 'source')]
+# } else {
+#   is.na(my_session_info2$data.version) <- ''
+#   my_session_info2 <- my_session_info2[, c('package', 'version', 'data.version', 'date', 'source')]
+# }
 
 # if this is a vignette in a package, add the data package without loading it
 if (grepl("vignettes", getwd()) & file.exists('../DESCRIPTION')) {
