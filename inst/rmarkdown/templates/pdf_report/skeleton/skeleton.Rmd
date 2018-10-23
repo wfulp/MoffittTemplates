@@ -266,7 +266,7 @@ kableExtra::kable(my_session_info1, 'latex', row.names = F, booktabs = TRUE, lin
 
 # TABLE 2
 # Need to split up code based on devtools version:
-devtools_version <- my_session_info$packages$loadedversion[my_session_info$packages$package == 'devtools']
+devtools_version <-  packageVersion('devtools')
 if (numeric_version(devtools_version) >= '2.0.0') {
 my_session_info2 <- packages[packages$attached,] # Only want attached packages
 my_session_info2 <- data.frame(package = my_session_info2$package, 
