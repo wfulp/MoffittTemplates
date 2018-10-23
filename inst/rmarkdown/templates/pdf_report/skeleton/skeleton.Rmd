@@ -191,6 +191,9 @@ if (any(installed.packages()[,1] == 'rmarkdown')) suppressWarnings(library(rmark
 # loading in MoffittTemplates so we can capture verison number
 if (any(installed.packages()[,1] == 'MoffittTemplates')) suppressWarnings(library(MoffittTemplates))
 
+# User must have devtools installed
+  if (!'devtools' %in% installed.packages()[,1]) 
+    install.packages('devtools', dependencies = TRUE,repos = "http://cran.us.r-project.org")
 my_session_info <- devtools::session_info()
 
 platform <- my_session_info[[1]]
@@ -215,11 +218,11 @@ user_info <- data.frame(
   value = username,
   stringsAsFactors = FALSE)
 
-gitremote <-  substr(remote <- system("git remote -v", intern = TRUE)[1],
+gitremote <-  substr(remote <- suppressWarnings(system("git remote -v", intern = TRUE))[1],
                      regexpr("\t", remote) + 1,
                      regexpr(" ", remote) - 1)
 
-if (is.na(gitremote) | gitremote == "") {
+if (is.na(gitremote) || gitremote == "" || grep('fatal', gitremote)) {
   # No Remote Connection, so just give absolute path
   folder_info <- data.frame(
     name = 'location',
@@ -259,11 +262,17 @@ kable(my_session_info1, 'latex', row.names = F, booktabs = TRUE, linesep = '', c
 ```{r session_info2, results = 'asis'}
 
 # TABLE 2
+# Need to split up code based on devtools version:
+devtools_version <- my_session_info$packages$loadedversion[my_session_info$packages$package == 'devtools']
+if (numeric_version(devtools_version) >= '2.0.0') {
 my_session_info2 <- packages[packages$attached,] # Only want attached packages
 my_session_info2 <- data.frame(package = my_session_info2$package, 
                                version = my_session_info2$loadedversion, 
                                date = my_session_info2$date, 
                                my_session_info2$source) 
+} else {
+  my_session_info2 <- packages[packages$`*` == '*', -2]
+}
 # 
 # # Adding in Data Versions
 # if (nrow(my_session_info2) > 0) {
