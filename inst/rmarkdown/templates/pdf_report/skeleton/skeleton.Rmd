@@ -137,6 +137,8 @@ kable(mtcars, format = "latex", caption = "A simple table")
 
 ```{r session_info_table, results = 'asis'}
 
+### Chunk to create reproducibility tables
+
 # get username
 getUsername <- function(id=NULL){
   switch(Sys.info()[['sysname']],
@@ -206,6 +208,7 @@ my_session_info1 <- data.frame(
   stringsAsFactors = FALSE)
 
 my_current_input <- ifelse(is.null(ci <- knitr::current_input()), 'No Input File Detected', ci)
+my_current_input_w_dir <- ifelse(is.null(ci <- knitr::current_input(dir = TRUE)), 'No Input File Detected', ci)
 
 file_name <-  data.frame(
   name = 'file name',
@@ -222,31 +225,30 @@ gitremote <-  substr(remote <- suppressWarnings(system("git remote -v", intern =
                      regexpr("\t", remote) + 1,
                      regexpr(" ", remote) - 1)
 
-if (is.na(gitremote) || gitremote == "" || grep('fatal', gitremote)) {
+if (is.na(gitremote) || gitremote == "" || grepl('fatal', gitremote)) {
   # No Remote Connection, so just give absolute path
   folder_info <- data.frame(
     name = 'location',
-    value = getwd(),
+    value = ifelse(my_current_input_w_dir != 'No Input File Detected', dirname(my_current_input_w_dir), getwd()),
   stringsAsFactors = FALSE)
   my_session_info1 <- rbind(my_session_info1, folder_info, file_name, user_info)
 } else{
-  # Git Remote connection, so getting url and path
+  if (my_current_input_w_dir != 'No Input File Detected') {
+    
   all_git_files <- system('git ls-files -co --no-empty-directory --full-name', intern = TRUE)
-  folder_info_in <- sub(paste0('/', my_current_input), '',
-                        all_git_files[grep(my_current_input, all_git_files)])
-
-  if (length(folder_info_in) == 0) {
-    folder_info_in <- 'No Location Detected'
+  folder_info_in <- dirname(all_git_files[unlist(lapply(all_git_files, function(xx) grepl(xx, my_current_input_w_dir)))])
+     
   } else {
-    folder_info_in <- folder_info_in[sapply(folder_info_in,
-                                            function(x){length(grep(x, getwd())) == 1})]
-    }
+    folder_info_in <- 'No Location Detected'
+  }
   
+
   # Dropping matching file names that do not match folder path
   folder_info <- data.frame(
     name = 'location',
     value = folder_info_in,
   stringsAsFactors = FALSE)
+  
   url_info <- data.frame(
     name = 'repo',
     value = gitremote,
@@ -255,7 +257,8 @@ if (is.na(gitremote) || gitremote == "" || grep('fatal', gitremote)) {
   my_session_info1 <- rbind(my_session_info1, url_info, folder_info, file_name, user_info)
 }
 
-kable(my_session_info1, 'latex', row.names = F, booktabs = TRUE, linesep = '', caption = "Supplemental Table: Reproducibility Software Session Information") %>% kable_styling(font_size = 7)
+kableExtra::kable(my_session_info1, 'latex', row.names = F, booktabs = TRUE, linesep = '', caption = "Supplemental Table: Reproducibility Software Session Information") %>% kableExtra::kable_styling(font_size = 7)
+
 
 ```
 
@@ -313,7 +316,7 @@ my_session_info2 <- rbind(my_session_info2, thisRow)
 my_session_info2 <- my_session_info2[, c('package', 'version', 'data.version', 'date', 'source')]
 }
 
-kable(my_session_info2, 'latex', row.names = F, booktabs = TRUE, linesep = '', caption = "Supplemental Table: Reproducibility Software Package Version Information") %>% kable_styling(font_size = 7)
+kableExtra::kable(my_session_info2, 'latex', row.names = F, booktabs = TRUE, linesep = '', caption = "Supplemental Table: Reproducibility Software Package Version Information") %>% kableExtra::kable_styling(font_size = 7)
 
 ```
 
