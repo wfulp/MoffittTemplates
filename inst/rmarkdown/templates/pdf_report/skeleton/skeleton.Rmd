@@ -271,7 +271,7 @@ my_session_info2 <- packages[packages$attached,] # Only want attached packages
 my_session_info2 <- data.frame(package = my_session_info2$package, 
                                version = my_session_info2$loadedversion, 
                                date = my_session_info2$date, 
-                               my_session_info2$source) 
+                               source = my_session_info2$source) 
 } else {
   my_session_info2 <- packages[packages$`*` == '*', -2]
 }
