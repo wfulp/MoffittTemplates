@@ -1,7 +1,7 @@
 Package: MoffittTemplates
 Type: Package
 Title: A report template for Moffitt Biostat
-Version: 0.1.2
+Version: 0.1.3
 Date: 2018-06-27
 Author: William "Jimmy" Fulp
 Maintainer: William "Jimmy" Fulp <william.fulp@moffitt.org>
