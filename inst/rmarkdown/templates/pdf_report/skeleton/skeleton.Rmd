@@ -271,6 +271,7 @@ my_session_info2 <- data.frame(package = my_session_info2$package,
                                source = my_session_info2$source) 
 } else {
   my_session_info2 <- packages[packages$`*` == '*', -2]
+  names(my_session_info2) <- names(packages)[-2]
 }
 # 
 # # Adding in Data Versions
