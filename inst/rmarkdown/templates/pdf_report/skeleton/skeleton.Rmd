@@ -136,6 +136,13 @@ kable(mtcars, format = "latex", caption = "A simple table")
 
 ```{r session_info_table, results = 'asis'}
 
+# loading in rmarkdown so we can capture verison number
+if (any(installed.packages()[,1] == 'rmarkdown')) suppressWarnings(library(rmarkdown))
+# loading in MoffittTemplates so we can capture verison number
+if (any(installed.packages()[,1] == 'MoffittTemplates')) suppressWarnings(library(MoffittTemplates))
+
+
+
 ### Chunk to create reproducibility tables
 
 # get username
@@ -156,41 +163,31 @@ getUsername <- function(id=NULL){
     },
     Linux   = {
       if (is.null(id)) {id <- Sys.getenv("USER")}
-      
-      #Can't get user name to populate in Mac or Linux
-      user <- id
-      # myargs <- paste0("-x -h mcc_ldap.hlm.ad.moffitt.usf.edu -b dc=hlm,dc=ad,dc=moffitt,dc=usf,dc=edu uid=", id)
-      # user <- system2("ldapsearch", args = myargs, stdout=TRUE)
-      # user <- user[grep("cn:", user)]
-      # if(length(user)>0){
-      #   user <- gsub("[a-z]+: ", "", user)
-      # } else {
-      #   stop("No userid ", id, " was found.")
-      # }
+      myargs <- paste0("-h mcc_ldap.hlm.ad.moffitt.usf.edu -b dc=hlm,dc=ad,dc=moffitt,dc=usf,dc=edu uid=", id)
+      user <- system2("ldapsearch", args = myargs, stdout = TRUE)
+      user <- user[grep("cn:", user)]
+      if (length(user) > 0) {
+        user <- gsub("[a-z]+: ", "", user)
+      } else {
+        stop("No userid ", id, " was found.")
+      }
     },
     Darwin  = {
       if (is.null(id)) {id <- Sys.getenv("USER")}
-      user <- id
-      #Can't get user name to populate in Mac or Linux
-      # myargs <- paste0("-x -h mcc_ldap.hlm.ad.moffitt.usf.edu -b dc=hlm,dc=ad,dc=moffitt,dc=usf,dc=edu uid=", id)
-      # user <- system2("ldapsearch", args = myargs, stdout=TRUE)
-      # user <- user[grep("cn:", user)]
-      # if(length(user)>0){
-      #   user <- gsub("[a-z]+: ", "", user)
-      # } else {
-      #   stop("No userid ", id, " was found.")
-      # }
+      myargs <- paste0("-h mcc_ldap.hlm.ad.moffitt.usf.edu -b dc=hlm,dc=ad,dc=moffitt,dc=usf,dc=edu uid=", id)
+      user <- system2("ldapsearch", args = myargs, stdout = TRUE)
+      user <- user[grep("cn:", user)]
+      if (length(user) > 0) {
+        user <-  paste(strsplit(gsub(",", "", gsub("[a-z]+: ", "", user)), " ")[[1]][c(2, 1)], collapse = " ")
+      } else {
+        stop("No userid ", id, " was found.")
+      }
     }
   )
 
   return(user)
 }
 username <- ifelse(getUsername() == "0 Success", Sys.getenv("USER"), getUsername())
-
-# loading in rmarkdown so we can capture verison number
-if (any(installed.packages()[,1] == 'rmarkdown')) suppressWarnings(library(rmarkdown))
-# loading in MoffittTemplates so we can capture verison number
-if (any(installed.packages()[,1] == 'MoffittTemplates')) suppressWarnings(library(MoffittTemplates))
 
 # User must have devtools installed
   if (!'devtools' %in% installed.packages()[,1]) 
