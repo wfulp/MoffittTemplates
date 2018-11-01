@@ -447,7 +447,7 @@ kable(OS_adj_fit_table, 'latex', escape = F, longtable = F, booktabs = TRUE, lin
 
 cycles_KM_fit <- survfit(surv_months_obj ~ Cycles_cat, data = Analytical_Data)
 
-ggsurvplot(cycles_KM_fit, data = Analytical_Data, pval = TRUE, risk.table = TRUE, ggtheme = theme_grey(),risk.table.col = "strata",  legend.labs = levels(Analytical_Data$Cycles_cat), break.x.by = 12, xlab = 'Survival Months', censor.size = 4.5, ncensor.plot = FALSE, pval.method = T, legend.title = '   Number \n of Cycles', legend = c(.10, .25), pval.coord = c(20, .15), pval.method.coord = c(20, .2))
+ggsurvplot(cycles_KM_fit, data = Analytical_Data, pval = TRUE, risk.table = TRUE, ggtheme = theme_classic(),risk.table.col = "strata",  legend.labs = levels(Analytical_Data$Cycles_cat), break.x.by = 12, xlab = 'Survival Months', censor.size = 4.5, ncensor.plot = FALSE, pval.method = T, legend.title = '   Number \n of Cycles', legend = c(.10, .25), pval.coord = c(20, .15), pval.method.coord = c(20, .2))
 
 ```
 
@@ -458,7 +458,7 @@ ggsurvplot(cycles_KM_fit, data = Analytical_Data, pval = TRUE, risk.table = TRUE
 
 PT0N0_KM_fit <- survfit(surv_months_obj ~ PT0N0, data = Analytical_Data)
 
-ggsurvplot(PT0N0_KM_fit, data = Analytical_Data, pval = TRUE, risk.table = TRUE, ggtheme = theme_grey(),risk.table.col = "strata",  legend.labs = c("No Completed \n Response", "Complete \n Response"), break.x.by = 12, xlab = 'Survival Months', censor.size = 4.5, ncensor.plot = FALSE, pval.method = T, legend.title = 'Downstaging', legend = c(.135, .15), pval.coord = c(35, .15), pval.method.coord = c(35, .2))
+ggsurvplot(PT0N0_KM_fit, data = Analytical_Data, pval = TRUE, risk.table = TRUE, ggtheme = theme_classic(),risk.table.col = "strata",  legend.labs = c("No Completed \n Response", "Complete \n Response"), break.x.by = 12, xlab = 'Survival Months', censor.size = 4.5, ncensor.plot = FALSE, pval.method = T, legend.title = 'Downstaging', legend = c(.135, .15), pval.coord = c(35, .15), pval.method.coord = c(35, .2))
 
 ```
 
