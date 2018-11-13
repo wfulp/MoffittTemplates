@@ -20,12 +20,13 @@ bibliography: bibliography.bib
 lof: yes
 lot: yes
 toc: yes
-longtoc: no
 output: MoffittTemplates::pdf_report
 ---
 
 
 ```{r setup, echo=FALSE, eval=TRUE, include = FALSE}
+# various options needing to be set
+options(xtable.comment = FALSE, datatable.verbose = FALSE, scipen = 10, knitr.kable.NA = '', knitr.table.format = 'latex')   
 
 ### Add additional packages needed here
 packages = c("tidyverse","knitr","kableExtra", 'survminer',"MoffittFunctions","compareGroups")
@@ -43,138 +44,34 @@ package.check <- lapply(packages, FUN = function(x) {
   library(x, character.only = TRUE)
 })
 
-
 # Set some knitr options
 # This will always generate two figures (pdf and png, which can be handy for presentations)
 # Note it is bad practice to globally set warning = F. Only set this for chunks you have confirmed warnings have been considered
 opts_chunk$set(tidy = TRUE, cache = FALSE, messages = TRUE, warning = TRUE, echo = FALSE, dev = c("png", "pdf"), dpi = 200)
 
+
 # Create a theme
 # This can be overloaded with other options
 moffitt_theme <- theme(legend.position = "bottom", legend.margin = margin(unit = "cm"))
-# various options needing to be set
-options(xtable.comment = FALSE, datatable.verbose = FALSE, scipen = 10, knitr.kable.NA = '', knitr.table.format = 'latex')   
 
 ```
 
 
-```{r chunk-to-remove-once-move-to-package}
+```{r}
 
-###Will Remove chunk once functions go into MoffittFunctions
-
-## Function to take a compageGroup table output and add significant coloring
-pretty_pvalue_compareGroups <- function(compareGroups_table_obj, alpha = 0.05){
+pretty_pvalue_compareGroups <- function(compareGroups_table_obj, digits = 3, sig_alpha = 0.05, background = 'yellow'){
   vars_to_adjust <- colnames(compareGroups_table_obj$descr)[grep('p\\.', colnames(compareGroups_table_obj$descr))]
 
   for (i in vars_to_adjust) {
     temp_values <- compareGroups_table_obj$descr[,i]
     temp_values[temp_values == '.'] <- ''
     numeric_values <- as.numeric(sub('<', '', temp_values))
-    change_index <- which(numeric_values < alpha)
-    compareGroups_table_obj$descr[change_index,i] <- paste0('\\cellcolor{yellow}{', compareGroups_table_obj$descr[change_index,i], '}')
+    compareGroups_table_obj$descr[,i] <- pretty_pvalues(numeric_values, digits = digits, sig_alpha = sig_alpha, background = background)
   }
   compareGroups_table_obj
 }
 
-pretty_model_output <- function(model_fit, model_data, est_digits = 3, p_digits = 4, est_name = c('Est','OR','HR'), sig_alpha = 0.05, background = 'yellow', overall_p_test_stat = c('Wald', 'LR'), ...) {
-  est_name <- match.arg(est_name)
-  overall_p_test_stat <- match.arg(overall_p_test_stat)
-
-  if (any(class(model_fit) == 'glm')) {
-    exp_output <- model_fit$family$family %in% c('binomial', 'quasibinomial')
-  } else {
-    exp_output <- any(class(model_fit) == 'coxph')
-  }
-
-  #Using Variable labels for output, is no label using variable name
-  var_names <- all.vars(model_fit$terms)[-1]
-  if (!all(var_names %in% colnames(model_data)))
-    stop('All variables used in the "model_fit" must be in the "model_data" dataset')
-  var_labels <- Hmisc::label(model_data)[var_names]
-  if (any(var_labels == ''))
-    var_labels[var_labels == ''] <- gsub('_', ' ', var_names[var_labels == ''])
-
-
-  neat_fit = model_fit %>% broom::tidy(conf.int = TRUE, exponentiate = exp_output) %>%
-    mutate(p.label = pretty_pvalues(p.value, digits = p_digits, sig_alpha = sig_alpha, trailing_zeros = TRUE, background = background, ...)) %>%
-    select(variable = term, est = estimate, p.label, p.value, conf.low, conf.high) %>%
-    filter(variable != "(Intercept)")
-
-
-  if (length(model_fit$xlevels) > 0) {
-    all_levels = model_fit$xlevels %>% tibble::enframe() %>% tidyr::unnest() %>%
-      mutate(variable = paste0(name, value))
-
-    neat_fit <- full_join( all_levels, neat_fit, by = "variable") %>%
-      mutate(
-        name = ifelse(is.na(name), variable, name),
-        value = ifelse(is.na(value), '', value)
-      )
-  } else {
-    neat_fit <- neat_fit %>%
-      mutate(
-        name = variable,
-        value = ''
-      )
-
-  }
-
-  neat_fit <- neat_fit %>%
-    mutate(
-      est.label = ifelse(is.na(est), "1.0 (Reference)",
-                         stat_paste(est, conf.low, conf.high, digits = est_digits, trailing_zeros = TRUE)),
-      p.label = ifelse(is.na(p.label), '-', p.label),
-    ) %>%
-    select(Variable_all = name, Level = value, Est_CI = est.label, `P Value` = p.label) %>%
-    arrange(factor(Variable_all, levels = var_names)) %>%
-    rename(!!paste0(est_name, ' (95\\% CI)') := Est_CI)
-
-  # Dropping extra variable names
-  neat_fit <- neat_fit %>%
-    mutate(Variable_sub = ifelse(duplicated(Variable_all), '', Variable_all),
-           Variable = var_labels[match(Variable_all,var_names)])
-
-  ## Type III Overall variable tests
-
-  # Getting which vars we need overall tests for
-  overall_vars_needed <- neat_fit %>% dplyr::group_by(Variable_all) %>% dplyr::summarise(run_var = n() > 2)
-
-  if (any(overall_vars_needed$run_var)) {
-    type3_tests <- full_join(broom::tidy(car::Anova(model_fit, type = 'III', test.statistic = overall_p_test_stat)),
-                             overall_vars_needed, by = c('term' = 'Variable_all')) %>%
-      filter(term != "(Intercept)" & run_var) %>%
-      mutate(overall.p.label = pretty_pvalues(p.value, digits = p_digits, sig_alpha = sig_alpha, trailing_zeros = TRUE, background = background, ...)) %>%
-      select(variable = term, `Overall P Value` = overall.p.label)
-
-    neat_fit <- full_join(neat_fit, type3_tests, by = c("Variable_sub" = "variable")) %>%
-      mutate(`Overall P Value` = ifelse(is.na(`Overall P Value`), '', `Overall P Value`))
-  }
-
-  neat_fit  %>% select(Variable, Level, contains('CI'), contains('P Value'))
-
-}
-
-# Function to run multiple pretty_model_output OS univariate results
-get_univariate_output_fun <- function(x_in, data_in, y_in, event_in = NULL, ...) {
-  if (is.null(event_in)) {
-    # Logistic Model
-    est_here <- 'OR'
-    tmp_formula <- as.formula(paste(y_in, " ~ ", x_in))
-    tmp_fit <- glm(tmp_formula, data = data_in, family = binomial(link = "logit"))
-    tmp_output <- pretty_model_output(model_fit = tmp_fit, model_data = data_in, est_name = est_here, ...)
-    bind_cols(tmp_output, n = c(paste0('n=',nrow(tmp_fit$model)), rep("", nrow(tmp_output) - 1)))
-  } else {
-    # Coxph Model
-    est_here <- 'HR'
-    tmp_formula <- as.formula(paste("Surv(",y_in,",",event_in,") ~ ", x_in))
-    tmp_fit <- coxph(tmp_formula, data = data_in)
-    tmp_output <- pretty_model_output(model_fit = tmp_fit, model_data = data_in, est_name = est_here, ...)
-    bind_cols(tmp_output, `n (events)` = c(paste0('n=',tmp_fit$n,' (',tmp_fit$nevent,')'), rep("", nrow(tmp_output) - 1)))
-  }
-}
-
 ```
-
 
 
 ```{r data_process}
@@ -213,21 +110,22 @@ cycle_levels <- levels(Analytical_Data$Cycles_cat)
 ### Chunk contianing compareGroup results for overall tables and tables by a variable. 
 ### Chunk goes here in case you want to dynamically refer to results in text
 
+## Can disregard "Chi-squared approximation" message, as compareGroups will correctly use fisher.test() when expected cell count <5
 
 ## Overall descriptive stats
 overall_formula <- 
-  as.formula( ~ Age_At_Diagnosis + Gender + Marital_Status + Education_Status + Elix_Sum + Histology_Grouped + Clinical_Stage + Pathologic_Stage + Cycles_cat + Adjuvant_Chemo + Positive_Margins + PT0N0 + Cancer_Specific_Vital_Status + Vital_Status + Survival_Days + Survival_Months + Survival_Years)
-overall_compare <- compareGroups::compareGroups(overall_formula, data = as.data.frame(Analytical_Data),
+  as.formula( ~ Age_At_Diagnosis + Gender + Marital_Status + Elix_Sum + Histology_Grouped + Clinical_Stage + Pathologic_Stage + Cycles_cat + Adjuvant_Chemo + Positive_Margins + PT0N0 + Cancer_Specific_Vital_Status + Vital_Status + Survival_Days + Survival_Months + Survival_Years)
+overall_compare <- compareGroups::compareGroups(overall_formula, data = as.data.frame(Analytical_Data), subset = NULL,
                                  include.label = TRUE, method = 2, Q1 = 0, Q3 = 1, simplify = FALSE, max.xlev = 12)
 
 ## By Cycles descriptive stats and tests
-cycles_formula <- as.formula(Cycles_cat ~ Age_At_Diagnosis + Gender + Marital_Status + Education_Status + Elix_Sum + Histology_Grouped + Clinical_Stage_Grouped + Pathologic_Stage + PT0N0 + Any_Downstaging)
-cycles_compare <- compareGroups::compareGroups(cycles_formula, data = Analytical_Data, p.corrected = FALSE,
+cycles_formula <- as.formula(Cycles_cat ~ Age_At_Diagnosis + Gender + Marital_Status + Elix_Sum + Histology_Grouped + Clinical_Stage_Grouped + Pathologic_Stage + PT0N0 + Any_Downstaging)
+cycles_compare <- compareGroups::compareGroups(cycles_formula, data = Analytical_Data, p.corrected = FALSE, subset = NULL,
                                       method = 2, Q1 = .25, Q3 = .75, compute.ratio = T, byrow = FALSE)
 
 ## By PT0N0 descriptive stats and tests
-PT0N0_formula <- as.formula(PT0N0 ~ Cycles_cat + Age_At_Diagnosis + Gender + Marital_Status + Education_Status + Elix_Sum + Histology_Grouped + Clinical_Stage_Grouped)
-PT0N0_compare <- compareGroups::compareGroups(PT0N0_formula, data = Analytical_Data, p.corrected = FALSE,
+PT0N0_formula <- as.formula(PT0N0 ~ Cycles_cat + Age_At_Diagnosis + Gender + Marital_Status + Elix_Sum + Histology_Grouped + Clinical_Stage_Grouped)
+PT0N0_compare <- compareGroups::compareGroups(PT0N0_formula, data = Analytical_Data, p.corrected = FALSE, subset = NULL,
                                       method = 2, Q1 = .25, Q3 = .75, compute.ratio = T, byrow = T)
 
 
@@ -241,17 +139,17 @@ PT0N0_compare <- compareGroups::compareGroups(PT0N0_formula, data = Analytical_D
 ### Chunk contianing logistic models and fancy output. 
 ### Chunk goes here in case you want to dynamically refer to results in text
 
-vars_to_do <- c('Cycles_cat','Age_At_Diagnosis', 'Gender', 'Marital_Status', 'Education_Status', 'Elix_Sum',  'Clinical_Stage_Model', 'Histology_Grouped')
+vars_to_run <- c('Cycles_cat','Age_At_Diagnosis', 'Gender', 'Marital_Status',  'Elix_Sum',  'Clinical_Stage_Model', 'Histology_Grouped')
 
 ## PT0N0 logistic fits
-PT0N0_unadj_fit_table <- purrr::map_dfr(vars_to_do, get_univariate_output_fun, Analytical_Data, "PT0N0", NULL) %>% 
-  dplyr::select(-n, dplyr::everything(), n)
+PT0N0_unadj_fit_table <- purrr::map_dfr(
+  vars_to_run, run_pretty_model_output, model_data = Analytical_Data, 
+  y_in = 'PT0N0', event_in = NULL, event_level = 'Complete Response', 
+  latex_output = TRUE)
 
-
-PT0N0_adj_fit <- 
-  glm(PT0N0 ~ Cycles_cat + Age_At_Diagnosis + Gender + Marital_Status + Elix_Sum + Clinical_Stage_Model + Histology_Grouped, 
-      family = binomial(link = "logit"), data = Analytical_Data)
-PT0N0_adj_fit_table <- pretty_model_output(model_fit = PT0N0_adj_fit, model_data = Analytical_Data, est_digits = 3, p_digits = 4)
+PT0N0_adj_fit_table <- run_pretty_model_output(
+  x_in = vars_to_run, model_data = Analytical_Data, y_in = 'PT0N0', 
+  event_in = NULL, event_level = 'Complete Response', latex_output = TRUE)
 
 
 
@@ -264,23 +162,30 @@ PT0N0_adj_fit_table <- pretty_model_output(model_fit = PT0N0_adj_fit, model_data
 ### Chunk survival results for overall tables and tables by a variable. 
 ### Chunk goes here in case you want to dynamically refer to results in text
 
-vars_to_do <- c('Cycles_cat','Age_At_Diagnosis', 'Gender', 'Marital_Status', 'Education_Status', 'Elix_Sum',  'Clinical_Stage_Model', 'Histology_Grouped' , 'Positive_Margins')
+vars_to_run <- c('Cycles_cat','Age_At_Diagnosis', 'Gender', 'Marital_Status', 'Elix_Sum',  'Clinical_Stage_Model', 'Histology_Grouped' , 'Positive_Margins')
 
 
 
-## Overall Survival fits
-OS_KM_fit_table <- map_dfr(setdiff(vars_to_do, c('Age_At_Diagnosis','Elix_Sum')), MoffittFunctions::run_km_model, Analytical_Data, "Survival_Months", "Vital_Status == 'Dead'", time_est = c(24, 60), surv_est_digits = 2, surv_est_prefix = 'Month', latex_output = TRUE)
-
-OS_unadj_fit_table <- map_dfr(vars_to_do, get_univariate_output_fun, 
-                              Analytical_Data, "Survival_Months", "Vital_Status == 'Dead'") %>% 
-  dplyr::select(-`n (events)`, dplyr::everything(), `n (events)`)
-
-OS_adj_fit <- 
-  coxph(surv_months_obj ~ Cycles_cat + Age_At_Diagnosis + Gender + Marital_Status + Elix_Sum  + Clinical_Stage_Grouped + Histology_Grouped + Positive_Margins, 
-        data = Analytical_Data)
-OS_adj_fit_table <- pretty_model_output(model_fit = OS_adj_fit, model_data = Analytical_Data, est_digits = 3, p_digits = 4)
+## KM Fits (excluding continuous variables, but adding NA for Overall)
+OS_KM_fit_table <- map_dfr(
+  c(NA,setdiff(vars_to_run, c('Age_At_Diagnosis','Elix_Sum'))), run_pretty_km_output, 
+  model_data = Analytical_Data,  time_in = 'Survival_Months', event_in = 'Vital_Status', event_level = 'Dead', 
+  time_est = c(24,60), surv_est_prefix = 'Month', p_digits = 5, 
+  latex_output = TRUE) %>% 
+  select(Group, Level, everything())
 
 
+## Cox fits
+# Unadjusted Models
+OS_unadj_fit_table <- map_dfr(
+  vars_to_run, run_pretty_model_output, model_data = Analytical_Data, 
+  y_in = 'Survival_Months', event_in = 'Vital_Status', event_level = 'Dead', 
+  latex_output = TRUE)
+
+# Multivariable model
+OS_adj_fit_table <- run_pretty_model_output(
+  x_in = vars_to_run, model_data = Analytical_Data, y_in = 'Survival_Months', 
+  event_in = 'Vital_Status', event_level = 'Dead', latex_output = TRUE)
 
 ```
 
@@ -331,6 +236,8 @@ Due to the exploratory nature of this analysis p-values were not adjusted for mu
 
 ### Graphical Methods
 
+**Expalation of what plots/figures were created**
+
 Distributions of continuous factors will be plotted for each outcome value, with box plots superimposed on the distributions. The mid-line of the box denotes the median and the ends of the box denote the $25^{th}$ and $75^{th}$ percentiles. The whiskers denote the most extreme data points that are no more than 1.5 times the interquartile range (i.e., height of the box). 
 
 Kaplan–Meier curves will be drawn for overall survival comparing selected categorical variables, along with number at risk along the x-axis.
@@ -371,17 +278,33 @@ There were no significant differences between any factors and number of cycles, 
 
 ```{r Variable-of-Interest-Table, results="asis"}
 
-compareGroups::export2latex(pretty_pvalue_compareGroups(compareGroups::createTable(cycles_compare, digits.p = 4, show.p.mul = T)), size = 'footnotesize', label = 'tab:compare_cycles', caption = 'Comparing Variables to Number of Cycles', header.labels = c('p.overall' = 'Overall P'), landscape = F)
+compareGroups::export2latex(pretty_pvalue_compareGroups(compareGroups::createTable(cycles_compare, digits.p = 4, show.p.mul = T), digits = 4), size = 'footnotesize', label = 'tab:compare_cycles', caption = 'Comparing Variables to Number of Cycles', header.labels = c('p.overall' = 'Overall P'), landscape = F)
 
 ```
 
+
+
+\clearpage
+
+
+```{r ElixSumplots, fig.cap="Elix Sum Relationship with Number of Cycles \\label{fig:Elix_Sum_plots}", fig.height=4, fig.width=6}
+# Should set seed since using geom_jitter
+set.seed(5254264)
+ggplot(Analytical_Data, aes(x = factor(Cycles, levels = 3:4), y = Elix_Sum, color =  factor(Cycles, levels = 3:4))) +
+  geom_boxplot(outlier.colour = NA, show.legend = FALSE) + 
+  geom_jitter(size = 2, position = position_jitter(height = 0, width = .25), show.legend = FALSE) +
+  xlab('Number of Cycles') + 
+  scale_y_continuous("Sum of Elixhauser Comorbidities", breaks = seq(0,9,by = 1)) +
+  theme_bw() + theme(axis.text = element_text(size = 12),axis.title.x = element_text(size = 10), strip.text = element_text(size = 12), legend.position = "bottom", legend.box = "horizontal")
+
+```
 
 
 \clearpage 
 
 ```{r Binary-Outcome-Table, results="asis"}
 
-compareGroups::export2latex(pretty_pvalue_compareGroups(compareGroups::createTable(PT0N0_compare, digits.p = 4, show.p.mul = T)), size = 'small', label = 'tab:compare_PT0N0', caption = 'Comparing Variables to Downstaged to pT0N0', header.labels = c('p.overall' = 'Overall P'), landscape = F)
+compareGroups::export2latex(pretty_pvalue_compareGroups(compareGroups::createTable(PT0N0_compare, digits.p = 4, show.p.mul = T), digits = 4), size = 'small', label = 'tab:compare_PT0N0', caption = 'Comparing Variables to Downstaged to pT0N0', header.labels = c('p.overall' = 'Overall P'), landscape = F)
 ```
 
 \clearpage 
@@ -400,9 +323,10 @@ kable(PT0N0_unadj_fit_table, 'latex', escape = F, longtable = F, booktabs = TRUE
 
 # Note if you have variables with the extra same levels you may have to set row_group_label_position = 'identity' to compile
 
-kable(PT0N0_adj_fit_table, 'latex', escape = F, longtable = F, booktabs = TRUE, linesep = '', caption = 'Multivariable Logistic Regression Model Results for Downstaged to pT0N0') %>% 
+kable(PT0N0_adj_fit_table %>% select(-n), 'latex', escape = F, longtable = F, booktabs = TRUE, linesep = '', caption = 'Multivariable Logistic Regression Model Results for Downstaged to pT0N0') %>% 
   collapse_rows(c(1:2), row_group_label_position = 'stack', headers_to_remove = 1:2, latex_hline = 'major') %>%
-  footnote(number = c('OR are odds of Downstaged to pT0N0 = Complete Response', paste0('Model sample size is n=',nrow(PT0N0_adj_fit$model))))
+  footnote(number = c('OR are odds of Downstaged to pT0N0 = Complete Response', paste0('Model sample size is ', 
+           PT0N0_adj_fit_table %>% select(n) %>% slice(1))))
 ```
 
 
@@ -430,9 +354,10 @@ kable(OS_unadj_fit_table, 'latex', escape = F, longtable = F, booktabs = TRUE, l
 
 # Note if you have variables with the extra same levels you may have to set row_group_label_position = 'identity' to compile
 
-kable(OS_adj_fit_table, 'latex', escape = F, longtable = F, booktabs = TRUE, linesep = '', caption = 'Multivariable Cox Proportional-Hazards Model for Overall Survival') %>% 
+kable(OS_adj_fit_table %>% select(-`n (events)`), 'latex', escape = F, longtable = F, booktabs = TRUE, linesep = '', caption = 'Multivariable Cox Proportional-Hazards Model for Overall Survival') %>% 
   collapse_rows(c(1:2), row_group_label_position = 'stack', headers_to_remove = 1:2, latex_hline = 'major') %>%
-  footnote(number = c('HR are odds of Death', paste0('Model sample size is n=',OS_adj_fit$n, ' (n events=',OS_adj_fit$nevent,')')))
+  footnote(number = c('HR are odds of Death', paste0('Model sample size (events) is ', 
+           OS_adj_fit_table %>% select(`n (events)`) %>% slice(1))))
 ```
 
 
@@ -454,200 +379,29 @@ ggsurvplot(cycles_KM_fit, data = Analytical_Data, pval = TRUE, risk.table = TRUE
 
 
 
-```{r KM-Plot-Outcome, fig.height=6, fig.cap="Overall Survival KM Curves by Complete Response \\label{fig:km_PT0N0}"}
-
-PT0N0_KM_fit <- survfit(surv_months_obj ~ PT0N0, data = Analytical_Data)
-
-ggsurvplot(PT0N0_KM_fit, data = Analytical_Data, pval = TRUE, risk.table = TRUE, ggtheme = theme_classic(),risk.table.col = "strata",  legend.labs = c("No Completed \n Response", "Complete \n Response"), break.x.by = 12, xlab = 'Survival Months', censor.size = 4.5, ncensor.plot = FALSE, pval.method = T, legend.title = 'Downstaging', legend = c(.135, .15), pval.coord = c(35, .15), pval.method.coord = c(35, .2))
-
-```
-
-
 
 
 \clearpage 
 
-```{r session_info_table, results = 'asis'}
+```{r Software-Session-Information, results = 'asis'}
 ### Chunk to create reproducibility tables
-
-
-# get username
-getUsername <- function(id=NULL){
-  switch(Sys.info()[['sysname']],
-    Windows = {
-      if (is.null(id)) {id <- Sys.getenv("USERNAME")}
-      myargs <- paste("user /domain", id)
-      user <- tryCatch({system2(command = "net", args = myargs, stdout = TRUE)},
-                       warning = function(w){NULL},
-                       error = function(e){NULL})
-      user <- gsub("Full Name\ *", "", user[grepl("FULL NAME", toupper(user))])
-      if (length(user) > 0) {
-        user <- paste(strsplit(gsub(",", "", user), " ")[[1]][c(2, 1)], collapse = " ")
-      } else {
-        stop("No userid ", id, " was found.")
-      }
-    },
-    Linux   = {
-      if (is.null(id)) {id <- Sys.getenv("USER")}
-      
-      #Can't get user name to populate in Mac or Linux
-      user <- id
-      # myargs <- paste0("-x -h mcc_ldap.hlm.ad.moffitt.usf.edu -b dc=hlm,dc=ad,dc=moffitt,dc=usf,dc=edu uid=", id)
-      # user <- system2("ldapsearch", args = myargs, stdout=TRUE)
-      # user <- user[grep("cn:", user)]
-      # if(length(user)>0){
-      #   user <- gsub("[a-z]+: ", "", user)
-      # } else {
-      #   stop("No userid ", id, " was found.")
-      # }
-    },
-    Darwin  = {
-      if (is.null(id)) {id <- Sys.getenv("USER")}
-      user <- id
-      #Can't get user name to populate in Mac or Linux
-      # myargs <- paste0("-x -h mcc_ldap.hlm.ad.moffitt.usf.edu -b dc=hlm,dc=ad,dc=moffitt,dc=usf,dc=edu uid=", id)
-      # user <- system2("ldapsearch", args = myargs, stdout=TRUE)
-      # user <- user[grep("cn:", user)]
-      # if(length(user)>0){
-      #   user <- gsub("[a-z]+: ", "", user)
-      # } else {
-      #   stop("No userid ", id, " was found.")
-      # }
-    }
-  )
-
-  return(user)
-}
-username <- ifelse(getUsername() == "0 Success", Sys.getenv("USER"), getUsername())
-
-# loading in rmarkdown so we can capture verison number
+# loading in rmarkdown and MoffittTemplates so we can capture verison number
 if (any(installed.packages()[,1] == 'rmarkdown')) suppressWarnings(library(rmarkdown))
-# loading in MoffittTemplates so we can capture verison number
 if (any(installed.packages()[,1] == 'MoffittTemplates')) suppressWarnings(library(MoffittTemplates))
 
-# User must have devtools installed
-  if (!'devtools' %in% installed.packages()[,1]) 
-    install.packages('devtools', dependencies = TRUE,repos = "http://cran.us.r-project.org")
-my_session_info <- devtools::session_info()
+my_session_info <- get_session_info()
 
-platform <- my_session_info[[1]]
-packages <- my_session_info[[2]]
-
-# TABLE 1
-my_session_info1 <- data.frame(
-  name = names(platform),
-  value = matrix(unlist(platform), nrow = length(platform)), 
-  stringsAsFactors = FALSE)
-
-my_current_input <- ifelse(is.null(ci <- knitr::current_input()), 'No Input File Detected', ci)
-
-file_name <-  data.frame(
-  name = 'file name',
-  value = my_current_input,
-  stringsAsFactors = FALSE)
-
-# Add user info
-user_info <- data.frame(
-  name = 'user',
-  value = username,
-  stringsAsFactors = FALSE)
-
-gitremote <-  substr(remote <- suppressWarnings(system("git remote -v", intern = TRUE))[1],
-                     regexpr("\t", remote) + 1,
-                     regexpr(" ", remote) - 1)
-
-if (is.na(gitremote) || gitremote == "" || grep('fatal', gitremote)) {
-  # No Remote Connection, so just give absolute path
-  folder_info <- data.frame(
-    name = 'location',
-    value = getwd(),
-  stringsAsFactors = FALSE)
-  my_session_info1 <- rbind(my_session_info1, folder_info, file_name, user_info)
-} else{
-  # Git Remote connection, so getting url and path
-  all_git_files <- system('git ls-files -co --no-empty-directory --full-name', intern = TRUE)
-  folder_info_in <- sub(paste0('/', my_current_input), '',
-                        all_git_files[grep(my_current_input, all_git_files)])
-
-  if (length(folder_info_in) == 0) {
-    folder_info_in <- 'No Location Detected'
-  } else {
-    folder_info_in <- folder_info_in[sapply(folder_info_in,
-                                            function(x){length(grep(x, getwd())) == 1})]
-    }
-  
-  # Dropping matching file names that do not match folder path
-  folder_info <- data.frame(
-    name = 'location',
-    value = folder_info_in,
-  stringsAsFactors = FALSE)
-  url_info <- data.frame(
-    name = 'repo',
-    value = gitremote,
-  stringsAsFactors = FALSE)
-  
-  my_session_info1 <- rbind(my_session_info1, url_info, folder_info, file_name, user_info)
-}
-
-kable(my_session_info1, 'latex', row.names = F, booktabs = TRUE, linesep = '', caption = "Supplemental Table: Reproducibility Software Session Information") %>% kable_styling(font_size = 7)
+kableExtra::kable(my_session_info$platform_table, 'latex', booktabs = TRUE, 
+      linesep = '', caption = "Reproducibility Software Session Information") %>% 
+      kableExtra::kable_styling(font_size = 8)
 
 ```
 
-```{r session_info2, results = 'asis'}
+```{r Software-Package-Version-Information, results = 'asis'}
 
-# TABLE 2
-# Need to split up code based on devtools version:
-devtools_version <- my_session_info$packages$loadedversion[my_session_info$packages$package == 'devtools']
-if (numeric_version(devtools_version) >= '2.0.0') {
-  my_session_info2 <- packages[packages$attached,] # Only want attached packages
-  my_session_info2 <- data.frame(package = my_session_info2$package, 
-                                 version = my_session_info2$loadedversion, 
-                                 date = my_session_info2$date, 
-                                 my_session_info2$source) 
-} else {
-  my_session_info2 <- packages[packages$`*` == '*', -2]
-}
-# 
-# # Adding in Data Versions
-# if (nrow(my_session_info2) > 0) {
-#   for (i in 1:nrow(my_session_info2)) {
-#     my_session_info2$data.version[i] <- as.character(packageDescription(my_session_info2$package[i], fields = 'DataVersion'))
-#   }
-# }
-# 
-# if (all(is.na(my_session_info2$data.version))) {
-#   my_session_info2 <- my_session_info2[, c('package', 'version', 'date', 'source')]
-# } else {
-#   is.na(my_session_info2$data.version) <- ''
-#   my_session_info2 <- my_session_info2[, c('package', 'version', 'data.version', 'date', 'source')]
-# }
-
-# if this is a vignette in a package, add the data package without loading it
-if (grepl("vignettes", getwd()) & file.exists('../DESCRIPTION')) {
-  thisRow <- my_session_info2[1, ,drop = FALSE]
-  rd <- roxygen2:::read.description("../DESCRIPTION")
-  thisRow <- data.frame(package = rd$Package,
-               version = rd$Version,
-               `data version` = rd$DataVersion,
-               date = rd$Date,
-               source = url_info$value,
-               stringsAsFactors = FALSE)
-
-# if local repo path is too long, break it into two lines
-# (this assumes that it doesn't need to wrap to 3 lines)
-if (nchar(thisRow$source) > 60) {
-  slashes <- gregexpr("/", thisRow$source, fixed = TRUE)[[1]]
-  p1 <- substr(thisRow$source, 1, slashes[which(slashes > 30)][1])
-  p2 <- substr(thisRow$source, slashes[which(slashes > 30)][1] + 1, 500)
-  newsource <- gsub("_", "\\_", paste0(p1, " \\\\ \n", p2), fixed = TRUE)
-  thisRow$source <- paste0("\\parbox[t]{3in}{", newsource, "}")
-}
-
-my_session_info2 <- rbind(my_session_info2, thisRow)
-my_session_info2 <- my_session_info2[, c('package', 'version', 'data.version', 'date', 'source')]
-}
-
-kable(my_session_info2, 'latex', row.names = F, booktabs = TRUE, linesep = '', caption = "Supplemental Table: Reproducibility Software Package Version Information") %>% kable_styling(font_size = 7)
+kableExtra::kable(my_session_info$packages_table, 'latex', booktabs = TRUE, 
+      linesep = '', caption = "Reproducibility Software Package Version Information") %>% 
+      kableExtra::kable_styling(font_size = 8)
 
 ```
 
