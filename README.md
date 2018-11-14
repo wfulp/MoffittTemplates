@@ -11,6 +11,6 @@ cred = git2r::cred_ssh_key(
 	publickey = "MYPATH/.ssh/id_rsa.pub", 
 	privatekey = "MYPATH/.ssh/id_rsa")
 
-devtools::install_git("git@gitlab.moffitt.usf.edu:ReproducibleResearch/R_Markdown_Templates.git", 
+remotes::install_git("git@gitlab.moffitt.usf.edu:ReproducibleResearch/R_Markdown_Templates.git", 
 					  credentials = cred)
 ```
