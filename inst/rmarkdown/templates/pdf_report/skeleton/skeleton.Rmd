@@ -189,23 +189,30 @@ OS_adj_fit_table <- run_pretty_model_output(
 
 ```
 
+This template is inspired by the the paper: **DataPackageR: Reproducible data preprocessing, standardization and sharing using R/Bioconductor for collaborative data analysis** [@reproducible_finak]
 
 # Background
 
-**Outline the study schema/schedule, study groups, time points, etc. **
+\textcolor{red}{Outline the study schema/schedule, study groups, time points, etc. Here}
+
+\textcolor{green}{Example Description:}
 
 Bladder Cancer Project looking at patients receiving neoadjuvant gemcitabine/cisplatin (GC), focusing on
 number of cycles (3 vs. 4)
 
 # Objectives
 
-**List report objectives**
+\textcolor{red}{List report objectives Here}
+
+\textcolor{green}{Example Description:}
 
 - For the patients receiving neoadjuvant gemcitabine/cisplatin (GC), is 3 or 4 cycles better.
 
 # Endpoints
 
-**List report Endpoints**
+\textcolor{red}{List report Endpoints Here}
+
+\textcolor{green}{Example Description:}
 
 - Downstaged to pT0N0 (No/Yes)
     - Did the patient have complete response?
@@ -218,13 +225,17 @@ number of cycles (3 vs. 4)
 
 ## Patient Eligibility
 
-**Define Subgroup**
+\textcolor{red}{Define Subgroup Here}
+
+\textcolor{green}{Example Description:}
 
 Patients receiving neoadjuvant gemcitabine/cisplatin (GC) chemo.
 
 ## Statistical Methods
 
-**Explain Statistical Methods Used**
+\textcolor{red}{Explain Statistical Methods Used Here}
+
+\textcolor{green}{Example Description:}
 
 Patient characteristics were summarized using descriptive statistics including median and range for continuous measures and proportions and frequencies for categorical measures. When comparing characteristics to histology the median and $25^{th}$ and $75^{th}$ percentiles are shown for continuous variables. The association between continuous variables and histology were assessed using Kruskal-Wallis tests. The associations between categorical variables and three endpoints were evaluated using Chi-squared tests or Fisher’s exact tests when the expected frequencies is less than 5 in some cell. Categorical variable levels for overall survival will be compared using the Log-rank test.
 
@@ -236,7 +247,9 @@ Due to the exploratory nature of this analysis p-values were not adjusted for mu
 
 ### Graphical Methods
 
-**Expalation of what plots/figures were created**
+\textcolor{red}{Expalation of what plots/figures were created}
+
+\textcolor{green}{Example Description:}
 
 Distributions of continuous factors will be plotted for each outcome value, with box plots superimposed on the distributions. The mid-line of the box denotes the median and the ends of the box denote the $25^{th}$ and $75^{th}$ percentiles. The whiskers denote the most extreme data points that are no more than 1.5 times the interquartile range (i.e., height of the box). 
 
@@ -246,31 +259,57 @@ Kaplan–Meier curves will be drawn for overall survival comparing selected cate
 
 ## Participant Cohort
 
-**Include sample sizes and other relevant cohort info here**
+\textcolor{red}{Include sample sizes and other relevant cohort info here Here}
 
-There are a total `r n_samp` patients in this analysis. Table \ref{tab:overall} show the descriptive statistics for all factors, with median and range for continuous measures and proportions and frequencies for categorical measures. 
+\textcolor{green}{Example Description:}
+
+There are a total `r n_samp` patients in this analysis. Table \ref{tab:Overall-Table} show the descriptive statistics for all factors, with median and range for continuous measures and proportions and frequencies for categorical measures. 
 
 There were `r sum(Analytical_Data$Clinical_Stage == 'Stage I (<=T1NxMx)')` patients that were Stage I ($\le T1NxMx$), but for the purposes of the analysis will be combined with the Stage II ($T2NxMx$) patients. 
 
-## **Variable of Interest** (Number of Cycles (3 vs. 4))
+## Number of Cycles (3 vs. 4) [Variable of Interest Results Here]
 
-Table \ref{tab:compare_cycles} shows the descriptive statistics for all factors by number of cycles (3 vs. 4), with median and $25^{th}$ and $75^{th}$ percentiles for continuous measures and proportions and frequencies for categorical measures. Overall tests were performed, as well as pairwise comparisons between the three number of cycles levels.
+\textcolor{red}{Description ofVariable of Interest Results Here}
 
-There were no significant differences between any factors and number of cycles, although the sum of Elixhauser Comorbidities differences across the number of cycles was near significant , with a median of `r paste0(cycles_compare[['Sum of Elixhauser Comorbidities']]$descriptive[-1,'med'], collapse = ' and ')` Elixhauser Comorbidities for `r paste0(cycle_levels, collapse = ' and ')` number of cycles, respectively (`r MoffittFunctions::pretty_pvalues(cycles_compare[['Sum of Elixhauser Comorbidities']]$p.overall, include_p = TRUE, digits = 4)`). Table \ref{tab:compare_cycles_cont} shows the mean and standard deviation of Sum of Elixhauser Comorbidities, where the mean is higher in the 3 number of cycles group. 
+*Table \ref{tab:Variable-of-Interest-Table} is an example of a table comparing a binary variable to multiple variables*
+
+*Figure \ref{fig:Elix_Sum_plots} is an example of a figure comparing a categorical variable to continuous variable (Boxplot)*
+
+\textcolor{green}{Example Description (Note text here using in-line r chunks for dynamic updating of statistics and p values):}
+
+Table \ref{tab:Variable-of-Interest-Table} shows the descriptive statistics for all factors by number of cycles (3 vs. 4), with median and $25^{th}$ and $75^{th}$ percentiles for continuous measures and proportions and frequencies for categorical measures. Overall tests were performed, as well as pairwise comparisons between the three number of cycles levels.
+
+There were no significant differences between any factors and number of cycles, although the sum of Elixhauser Comorbidities differences across the number of cycles was near significant , with a median of `r paste0(cycles_compare[['Sum of Elixhauser Comorbidities']]$descriptive[-1,'med'], collapse = ' and ')` Elixhauser Comorbidities for `r paste0(cycle_levels, collapse = ' and ')` number of cycles, respectively (`r MoffittFunctions::pretty_pvalues(cycles_compare[['Sum of Elixhauser Comorbidities']]$p.overall, include_p = TRUE, digits = 4)`). Figure \ref{fig:Elix_Sum_plots} shows the relationship between Sum of Elixhauser Comorbidities and the number of cycles.
 
 ## Outcomes
 
+\textcolor{red}{Description of Outcome Results Here}
+
 ### Downstage to Complete Resposne
+
+*Table \ref{tab:Binary-Outcome-Table} is an example of a table comparing a binary variable to multiple variables*
+
+*Table \ref{tab:Unadjusted-Logistic-Table} is an example of univariate Logistic Regression Models*
+
+*Table \ref{tab:Adjusted-Logistic-Table} is an example of a multivariable Logistic Regression Model*
+
 
 ### Overall Survival
 
-### Cancer Specific Survival
+*Table \ref{tab:KM-Table} is an example of a table comparing Kaplan–Meier Results overall and for multiple variables*
+
+*Table \ref{tab:Unadjusted-Cox-Table} is an example of univariate Cox Proportional-Hazards Regression Models*
+
+*Table \ref{tab:Adjusted-Cox-Table} is an example of a multivariable Cox Proportional-Hazards Regression Model*
+
+*Figure \ref{fig:km_cycles} is an example of a figure showing Kaplan–Meier curves by a categorical variable*
+
 
 # Figures and Tables
 
 ```{r Overall-Table, results="asis"}
 
- compareGroups::export2latex(compareGroups::createTable(overall_compare), size = 'small', label = 'tab:overall', caption = 'Overall Descriptive Statistics')
+ compareGroups::export2latex(compareGroups::createTable(overall_compare), size = 'small', label = 'tab:Overall-Table', caption = 'Overall Descriptive Statistics')
 ```
 
 
@@ -278,7 +317,7 @@ There were no significant differences between any factors and number of cycles, 
 
 ```{r Variable-of-Interest-Table, results="asis"}
 
-compareGroups::export2latex(pretty_pvalue_compareGroups(compareGroups::createTable(cycles_compare, digits.p = 4, show.p.mul = T), digits = 4), size = 'footnotesize', label = 'tab:compare_cycles', caption = 'Comparing Variables to Number of Cycles', header.labels = c('p.overall' = 'Overall P'), landscape = F)
+compareGroups::export2latex(pretty_pvalue_compareGroups(compareGroups::createTable(cycles_compare, digits.p = 4, show.p.mul = T), digits = 4), size = 'footnotesize', label = 'tab:Variable-of-Interest-Table', caption = 'Comparing Variables to Number of Cycles', header.labels = c('p.overall' = 'Overall P'), landscape = F)
 
 ```
 
@@ -304,7 +343,7 @@ ggplot(Analytical_Data, aes(x = factor(Cycles, levels = 3:4), y = Elix_Sum, colo
 
 ```{r Binary-Outcome-Table, results="asis"}
 
-compareGroups::export2latex(pretty_pvalue_compareGroups(compareGroups::createTable(PT0N0_compare, digits.p = 4, show.p.mul = T), digits = 4), size = 'small', label = 'tab:compare_PT0N0', caption = 'Comparing Variables to Downstaged to pT0N0', header.labels = c('p.overall' = 'Overall P'), landscape = F)
+compareGroups::export2latex(pretty_pvalue_compareGroups(compareGroups::createTable(PT0N0_compare, digits.p = 4, show.p.mul = T), digits = 4), size = 'small', label = 'tab:Binary-Outcome-Table', caption = 'Comparing Variables to Downstaged to pT0N0', header.labels = c('p.overall' = 'Overall P'), landscape = F)
 ```
 
 \clearpage 
@@ -314,7 +353,7 @@ compareGroups::export2latex(pretty_pvalue_compareGroups(compareGroups::createTab
 
 # Note if you have variables with the extra same levels you may have to set row_group_label_position = 'identity' to compile
 
-kable(PT0N0_unadj_fit_table, 'latex', escape = F, longtable = F, booktabs = TRUE, linesep = '', caption = 'Univariate Logistic Regression Model Results for Downstaged to pT0N0') %>% 
+kable(PT0N0_unadj_fit_table, 'latex', escape = F, longtable = T, booktabs = TRUE, linesep = '', caption = 'Univariate Logistic Regression Model Results for Downstaged to pT0N0') %>% 
   collapse_rows(c(1:2), row_group_label_position = 'stack', headers_to_remove = 1:2, latex_hline = 'major') %>%
   footnote(number = c('OR are odds of Downstaged to pT0N0 = Complete Response'))
 ```
@@ -323,7 +362,7 @@ kable(PT0N0_unadj_fit_table, 'latex', escape = F, longtable = F, booktabs = TRUE
 
 # Note if you have variables with the extra same levels you may have to set row_group_label_position = 'identity' to compile
 
-kable(PT0N0_adj_fit_table %>% select(-n), 'latex', escape = F, longtable = F, booktabs = TRUE, linesep = '', caption = 'Multivariable Logistic Regression Model Results for Downstaged to pT0N0') %>% 
+kable(PT0N0_adj_fit_table %>% select(-n), 'latex', escape = F, longtable = T, booktabs = TRUE, linesep = '', caption = 'Multivariable Logistic Regression Model Results for Downstaged to pT0N0') %>% 
   collapse_rows(c(1:2), row_group_label_position = 'stack', headers_to_remove = 1:2, latex_hline = 'major') %>%
   footnote(number = c('OR are odds of Downstaged to pT0N0 = Complete Response', paste0('Model sample size is ', 
            PT0N0_adj_fit_table %>% select(n) %>% slice(1))))
@@ -335,7 +374,7 @@ kable(PT0N0_adj_fit_table %>% select(-n), 'latex', escape = F, longtable = F, bo
 
 ```{r KM-Table, results="asis"}
 
-kable(OS_KM_fit_table, 'latex', escape = F, longtable = F, booktabs = TRUE, linesep = '', caption = 'KM Model for Overall Survival') %>% 
+kable(OS_KM_fit_table, 'latex', escape = F, longtable = T, booktabs = TRUE, linesep = '', caption = 'Kaplan–Meier Results for Overall Survival') %>% 
   collapse_rows(c(1:2), row_group_label_position = 'stack', headers_to_remove = 1:2, latex_hline = 'major') %>%
   kable_styling(font_size = 9) %>% 
   footnote(number = c('N.E. = Not Estimable'))
@@ -345,7 +384,7 @@ kable(OS_KM_fit_table, 'latex', escape = F, longtable = F, booktabs = TRUE, line
 
 # Note if you have variables with the extra same levels you may have to set row_group_label_position = 'identity' to compile
 
-kable(OS_unadj_fit_table, 'latex', escape = F, longtable = F, booktabs = TRUE, linesep = '', caption = 'Univariate Cox Proportional-Hazards Model for Overall Survival') %>% 
+kable(OS_unadj_fit_table, 'latex', escape = F, longtable = T, booktabs = TRUE, linesep = '', caption = 'Univariate Cox Proportional-Hazards Regression Models for Overall Survival') %>% 
   collapse_rows(c(1:2), row_group_label_position = 'stack', headers_to_remove = 1:2, latex_hline = 'major') %>%
   footnote(number = c('HR are odds of Death'))
 ```
@@ -354,7 +393,7 @@ kable(OS_unadj_fit_table, 'latex', escape = F, longtable = F, booktabs = TRUE, l
 
 # Note if you have variables with the extra same levels you may have to set row_group_label_position = 'identity' to compile
 
-kable(OS_adj_fit_table %>% select(-`n (events)`), 'latex', escape = F, longtable = F, booktabs = TRUE, linesep = '', caption = 'Multivariable Cox Proportional-Hazards Model for Overall Survival') %>% 
+kable(OS_adj_fit_table %>% select(-`n (events)`), 'latex', escape = F, longtable = T, booktabs = TRUE, linesep = '', caption = 'Multivariable Cox Proportional-Hazards Regression Model for Overall Survival') %>% 
   collapse_rows(c(1:2), row_group_label_position = 'stack', headers_to_remove = 1:2, latex_hline = 'major') %>%
   footnote(number = c('HR are odds of Death', paste0('Model sample size (events) is ', 
            OS_adj_fit_table %>% select(`n (events)`) %>% slice(1))))
@@ -368,7 +407,7 @@ kable(OS_adj_fit_table %>% select(-`n (events)`), 'latex', escape = F, longtable
 <!-- KM Plots -->
 
 
-```{r KM-Plot-Var-of-Interest, fig.height=6, fig.cap="Overall Survival KM Curves by Number of Cycles \\label{fig:km_cycles}"}
+```{r KM-Plot-Var-of-Interest, fig.height=6, fig.cap="Overall Survival Kaplan–Meier Curves by Number of Cycles \\label{fig:km_cycles}"}
 
 cycles_KM_fit <- survfit(surv_months_obj ~ Cycles_cat, data = Analytical_Data)
 
