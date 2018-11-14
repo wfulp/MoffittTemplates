@@ -250,7 +250,7 @@ Due to the exploratory nature of this analysis p-values were not adjusted for mu
 
 ### Graphical Methods
 
-\textcolor{red}{Expalation of what plots/figures were created}
+\textcolor{red}{Explanation of what plots/figures were created}
 
 \textcolor{green}{Example Description:}
 
@@ -272,7 +272,7 @@ There were `r sum(Analytical_Data$Clinical_Stage == 'Stage I (<=T1NxMx)')` patie
 
 ## Number of Cycles (3 vs. 4) [Variable of Interest Results Here]
 
-\textcolor{red}{Description ofVariable of Interest Results Here}
+\textcolor{red}{Description of Variable of Interest Results Here}
 
 *Table \ref{tab:Variable-of-Interest-Table} is an example of a table comparing a binary variable to multiple variables*
 
