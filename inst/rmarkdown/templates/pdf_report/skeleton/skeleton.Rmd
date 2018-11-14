@@ -24,15 +24,18 @@ output: MoffittTemplates::pdf_report
 ---
 
 
-```{r echo=FALSE, eval=TRUE, include = FALSE}
+```{r setup, echo=FALSE, eval=TRUE, include = FALSE}
+# various options needing to be set
+options(xtable.comment = FALSE, datatable.verbose = FALSE, scipen = 10, knitr.kable.NA = '', knitr.table.format = 'latex')   
 
 ### Add additional packages needed here
-packages = c("knitr","kableExtra","ggplot2","dplyr")
+packages = c("tidyverse","knitr","kableExtra", 'survminer',"MoffittFunctions","compareGroups")
 
 #if a package is installed, it will be loaded
 #if any are not, the missing package(s) will be installed and loaded
 package.check <- lapply(packages, FUN = function(x) {
   if (!require(x, character.only = TRUE)) {
+    # MoffittFunctions must be installed in seperately (not in CRAN)
     if (x == 'MoffittFunctions')
       stop('The package "MoffittFunctions" must be installed through GitLab: git@gitlab.moffitt.usf.edu:ReproducibleResearch/MoffittFunctions.git')
     
@@ -41,279 +44,406 @@ package.check <- lapply(packages, FUN = function(x) {
   library(x, character.only = TRUE)
 })
 
+if (numeric_version(packageVersion('MoffittFunctions')) < '0.1.2')
+  stop('MoffittFunctions must be at least version "0.1.2"')
 
 # Set some knitr options
 # This will always generate two figures (pdf and png, which can be handy for presentations)
+# Note it is bad practice to globally set warning = F. Only set this for chunks you have confirmed warnings have been considered
 opts_chunk$set(tidy = TRUE, cache = FALSE, messages = TRUE, warning = TRUE, echo = FALSE, dev = c("png", "pdf"), dpi = 200)
+
 
 # Create a theme
 # This can be overloaded with other options
 moffitt_theme <- theme(legend.position = "bottom", legend.margin = margin(unit = "cm"))
-#Need to set xtable comment = FALSE for printing
-options(xtable.comment = FALSE, datatable.verbose = FALSE, scipen = 10, knitr.kable.NA = '', knitr.table.format = 'latex')   
 
 ```
 
-```{r data_process, eval=TRUE}
-#loading data
-data(mtcars)
 
-#data processing
+```{r}
+
+pretty_pvalue_compareGroups <- function(compareGroups_table_obj, digits = 3, sig_alpha = 0.05, background = 'yellow'){
+  vars_to_adjust <- colnames(compareGroups_table_obj$descr)[grep('p\\.', colnames(compareGroups_table_obj$descr))]
+
+  for (i in vars_to_adjust) {
+    temp_values <- compareGroups_table_obj$descr[,i]
+    temp_values[temp_values == '.'] <- ''
+    numeric_values <- as.numeric(sub('<', '', temp_values))
+    compareGroups_table_obj$descr[,i] <- pretty_pvalues(numeric_values, digits = digits, sig_alpha = sig_alpha, background = background)
+  }
+  compareGroups_table_obj
+}
+
 ```
 
-# Summary of Main Results
 
-Summarize the findings of the report. Include specific comparisons and references to corresponding figures and tables.
+```{r data_process}
+#loading data (this is example data from MoffittFunctions)
+data("Bladder_Cancer")
 
+#data processing (any recoding needed)
+Analytical_Data <- Bladder_Cancer %>% 
+  mutate(Cycles_cat = droplevels(Cycles_cat),
+         Clinical_Stage_Model = recode_factor(Clinical_Stage_Grouped, 
+                                         'Stage I/II (<=T2NxMx)' = 'Stage I/II (<=T2NxMx)',
+                                         'Stage III (T3NxMx)' = 'Stage III/IV (T3/4NxMx)'
+                                         ,'Stage IV (T4NxMx)' = 'Stage III/IV (T3/4NxMx)')
+         )
+
+# Adding some extra Labels
+Hmisc::label(Analytical_Data$Positive_Margins) <- 'Positive Surgical Margins'
+
+# Survival Objects
+surv_months_obj <- survival::Surv(time = Analytical_Data$Survival_Months, event = Analytical_Data$Vital_Status == 'Dead')
+cancer_specific_surv_months_obj <- survival::Surv(time = Analytical_Data$Survival_Months, 
+                                        event = Analytical_Data$Cancer_Specific_Vital_Status == 'Cancer Specific Death')
+
+```
+
+
+```{r useful_values}
+### Chunck containing useful numbers you may want to dynamically use in the writing
+n_samp <- nrow(Analytical_Data)
+cycle_levels <- levels(Analytical_Data$Cycles_cat)
+```
+
+
+```{r uni_and_bi_compareGroups, warning=FALSE}
+
+### Chunk contianing compareGroup results for overall tables and tables by a variable. 
+### Chunk goes here in case you want to dynamically refer to results in text
+
+## Can disregard "Chi-squared approximation" message, as compareGroups will correctly use fisher.test() when expected cell count <5
+
+## Overall descriptive stats
+overall_formula <- 
+  as.formula( ~ Age_At_Diagnosis + Gender + Marital_Status + Elix_Sum + Histology_Grouped + Clinical_Stage + Pathologic_Stage + Cycles_cat + Adjuvant_Chemo + Positive_Margins + PT0N0 + Cancer_Specific_Vital_Status + Vital_Status + Survival_Days + Survival_Months + Survival_Years)
+overall_compare <- compareGroups::compareGroups(overall_formula, data = as.data.frame(Analytical_Data), subset = NULL,
+                                 include.label = TRUE, method = 2, Q1 = 0, Q3 = 1, simplify = FALSE, max.xlev = 12)
+
+## By Cycles descriptive stats and tests
+cycles_formula <- as.formula(Cycles_cat ~ Age_At_Diagnosis + Gender + Marital_Status + Elix_Sum + Histology_Grouped + Clinical_Stage_Grouped + Pathologic_Stage + PT0N0 + Any_Downstaging)
+cycles_compare <- compareGroups::compareGroups(cycles_formula, data = Analytical_Data, p.corrected = FALSE, subset = NULL,
+                                      method = 2, Q1 = .25, Q3 = .75, compute.ratio = T, byrow = FALSE)
+
+## By PT0N0 descriptive stats and tests
+PT0N0_formula <- as.formula(PT0N0 ~ Cycles_cat + Age_At_Diagnosis + Gender + Marital_Status + Elix_Sum + Histology_Grouped + Clinical_Stage_Grouped)
+PT0N0_compare <- compareGroups::compareGroups(PT0N0_formula, data = Analytical_Data, p.corrected = FALSE, subset = NULL,
+                                      method = 2, Q1 = .25, Q3 = .75, compute.ratio = T, byrow = T)
+
+
+```
+
+
+
+```{r logistic_models}
+
+
+### Chunk contianing logistic models and fancy output. 
+### Chunk goes here in case you want to dynamically refer to results in text
+
+vars_to_run <- c('Cycles_cat','Age_At_Diagnosis', 'Gender', 'Marital_Status',  'Elix_Sum',  'Clinical_Stage_Model', 'Histology_Grouped')
+
+## PT0N0 logistic fits
+PT0N0_unadj_fit_table <- purrr::map_dfr(
+  vars_to_run, run_pretty_model_output, model_data = Analytical_Data, 
+  y_in = 'PT0N0', event_in = NULL, event_level = 'Complete Response', 
+  latex_output = TRUE)
+
+PT0N0_adj_fit_table <- run_pretty_model_output(
+  x_in = vars_to_run, model_data = Analytical_Data, y_in = 'PT0N0', 
+  event_in = NULL, event_level = 'Complete Response', latex_output = TRUE)
+
+
+
+
+```
+
+
+```{r survival_models}
+
+### Chunk survival results for overall tables and tables by a variable. 
+### Chunk goes here in case you want to dynamically refer to results in text
+
+vars_to_run <- c('Cycles_cat','Age_At_Diagnosis', 'Gender', 'Marital_Status', 'Elix_Sum',  'Clinical_Stage_Model', 'Histology_Grouped' , 'Positive_Margins')
+
+
+
+## KM Fits (excluding continuous variables, but adding NA for Overall)
+OS_KM_fit_table <- map_dfr(
+  c(NA,setdiff(vars_to_run, c('Age_At_Diagnosis','Elix_Sum'))), run_pretty_km_output, 
+  model_data = Analytical_Data,  time_in = 'Survival_Months', event_in = 'Vital_Status', event_level = 'Dead', 
+  time_est = c(24,60), surv_est_prefix = 'Month', p_digits = 5, 
+  latex_output = TRUE) %>% 
+  select(Group, Level, everything())
+
+
+## Cox fits
+# Unadjusted Models
+OS_unadj_fit_table <- map_dfr(
+  vars_to_run, run_pretty_model_output, model_data = Analytical_Data, 
+  y_in = 'Survival_Months', event_in = 'Vital_Status', event_level = 'Dead', 
+  latex_output = TRUE)
+
+# Multivariable model
+OS_adj_fit_table <- run_pretty_model_output(
+  x_in = vars_to_run, model_data = Analytical_Data, y_in = 'Survival_Months', 
+  event_in = 'Vital_Status', event_level = 'Dead', latex_output = TRUE)
+
+```
+
+This template is inspired by the the paper: **DataPackageR: Reproducible data preprocessing, standardization and sharing using R/Bioconductor for collaborative data analysis** [@reproducible_finak]
 
 # Background
 
-Outline the study schema/schedule, study groups, time points, etc. 
+\textcolor{red}{Outline the study schema/schedule, study groups, time points, etc. Here}
+
+\textcolor{green}{Example Description:}
+
+Bladder Cancer Project looking at patients receiving neoadjuvant gemcitabine/cisplatin (GC), focusing on
+number of cycles (3 vs. 4)
 
 # Objectives
 
-List primary and secondary (if applicable) objectives. 
+\textcolor{red}{List report objectives Here}
+
+\textcolor{green}{Example Description:}
+
+- For the patients receiving neoadjuvant gemcitabine/cisplatin (GC), is 3 or 4 cycles better.
 
 # Endpoints
 
-## Biological endpoints
+\textcolor{red}{List report Endpoints Here}
 
-Describe the lab measures of interest and the antigens/isolates tested. 
+\textcolor{green}{Example Description:}
 
-## Statistical endpoints
+- Downstaged to pT0N0 (No/Yes)
+    - Did the patient have complete response?
+- Overall Survival
+    - Survival time from date of surgery to date of death or last follow-up
 
-Describe the statistical measures of interest (overall survival, response, response magnitude, etc.).
 
-# Lab Methods
+# Methods
 
-Describe the lab methods and sample inclusion criteria. 
 
-# Statistical Methods
+## Patient Eligibility
 
-## Graphical analysis
+\textcolor{red}{Define Subgroup Here}
 
-Update the following section as appropriate for your data.
+\textcolor{green}{Example Description:}
 
-## Statistical tests
+Patients receiving neoadjuvant gemcitabine/cisplatin (GC) chemo.
 
-Update the following section as appropriate for your data. 
+## Statistical Methods
 
-# Participant Cohort
+\textcolor{red}{Explain Statistical Methods Used Here}
 
-Summarize the sample size. Discuss expected vs. observed sample size if applicable. Consider including a summary table.
+\textcolor{green}{Example Description:}
+
+Patient characteristics were summarized using descriptive statistics including median and range for continuous measures and proportions and frequencies for categorical measures. When comparing characteristics to histology the median and $25^{th}$ and $75^{th}$ percentiles are shown for continuous variables. The association between continuous variables and histology were assessed using Kruskal-Wallis tests. The associations between categorical variables and three endpoints were evaluated using Chi-squared tests or Fisher’s exact tests when the expected frequencies is less than 5 in some cell. Categorical variable levels for overall survival will be compared using the Log-rank test.
+
+Logistic regression models were fit for the endpoints Downstaged to pT0N0 (No/Yes), and Cox Proportional Hazard models were fit for overall survival. Unadjusted and adjusted (multivariable) models were run for Histology and relevant covariates. Odds ratios (or Hazard ratios for Cox models), with 95% confidence intervals, and p values are presented. For categorical variables with more than two levels, p values are presented for each level compared to a referent level, and also an overall p value using the type-III analysis-of-variance result for the respective model.
+
+For cancer specific survival, deaths were only treated as events when the cause of death was confirmed to be due to the related cancer.
+
+Due to the exploratory nature of this analysis p-values were not adjusted for multiple comparisons.
+
+### Graphical Methods
+
+\textcolor{red}{Explanation of what plots/figures were created}
+
+\textcolor{green}{Example Description:}
+
+Distributions of continuous factors will be plotted for each outcome value, with box plots superimposed on the distributions. The mid-line of the box denotes the median and the ends of the box denote the $25^{th}$ and $75^{th}$ percentiles. The whiskers denote the most extreme data points that are no more than 1.5 times the interquartile range (i.e., height of the box). 
+
+Kaplan–Meier curves will be drawn for overall survival comparing selected categorical variables, along with number at risk along the x-axis.
 
 # Results
 
-Describe the statistical results.
+## Participant Cohort
 
-## Section 1
+\textcolor{red}{Include sample sizes and other relevant cohort info here Here}
 
-Consider breaking up the results section by objective or by statistical endpoint.
+\textcolor{green}{Example Description:}
 
-## Section 2
+There are a total `r n_samp` patients in this analysis. Table \ref{tab:Overall-Table} show the descriptive statistics for all factors, with median and range for continuous measures and proportions and frequencies for categorical measures. 
 
-Testing reference (@Huang:2013fl)
+There were `r sum(Analytical_Data$Clinical_Stage == 'Stage I (<=T1NxMx)')` patients that were Stage I ($\le T1NxMx$), but for the purposes of the analysis will be combined with the Stage II ($T2NxMx$) patients. 
 
-Testing Label testing here: See Figure \ref{fig:example_fig} and Table \ref{tab:example_tab}. 
+## Number of Cycles (3 vs. 4) [Variable of Interest Results Here]
+
+\textcolor{red}{Description of Variable of Interest Results Here}
+
+*Table \ref{tab:Variable-of-Interest-Table} is an example of a table comparing a binary variable to multiple variables*
+
+*Figure \ref{fig:Elix_Sum_plots} is an example of a figure comparing a categorical variable to continuous variable (Boxplot)*
+
+\textcolor{green}{Example Description (Note text here using in-line r chunks for dynamic updating of statistics and p values):}
+
+Table \ref{tab:Variable-of-Interest-Table} shows the descriptive statistics for all factors by number of cycles (3 vs. 4), with median and $25^{th}$ and $75^{th}$ percentiles for continuous measures and proportions and frequencies for categorical measures. Overall tests were performed, as well as pairwise comparisons between the three number of cycles levels.
+
+There were no significant differences between any factors and number of cycles, although the sum of Elixhauser Comorbidities differences across the number of cycles was near significant , with a median of `r paste0(cycles_compare[['Sum of Elixhauser Comorbidities']]$descriptive[-1,'med'], collapse = ' and ')` Elixhauser Comorbidities for `r paste0(cycle_levels, collapse = ' and ')` number of cycles, respectively (`r MoffittFunctions::pretty_pvalues(cycles_compare[['Sum of Elixhauser Comorbidities']]$p.overall, include_p = TRUE, digits = 4)`). Figure \ref{fig:Elix_Sum_plots} shows the relationship between Sum of Elixhauser Comorbidities and the number of cycles.
+
+## Outcomes
+
+\textcolor{red}{Description of Outcome Results Here}
+
+### Downstage to Complete Resposne
+
+*Table \ref{tab:Binary-Outcome-Table} is an example of a table comparing a binary variable to multiple variables*
+
+*Table \ref{tab:Unadjusted-Logistic-Table} is an example of univariate Logistic Regression Models*
+
+*Table \ref{tab:Adjusted-Logistic-Table} is an example of a multivariable Logistic Regression Model*
+
+
+### Overall Survival
+
+*Table \ref{tab:KM-Table} is an example of a table comparing Kaplan–Meier Results overall and for multiple variables*
+
+*Table \ref{tab:Unadjusted-Cox-Table} is an example of univariate Cox Proportional-Hazards Regression Models*
+
+*Table \ref{tab:Adjusted-Cox-Table} is an example of a multivariable Cox Proportional-Hazards Regression Model*
+
+*Figure \ref{fig:km_cycles} is an example of a figure showing Kaplan–Meier curves by a categorical variable*
+
 
 # Figures and Tables
 
-\clearpage
+```{r Overall-Table, results="asis"}
 
-```{r example_plot,fig.height = 4, fig.cap= "A simple figure with a descriptive caption including information about both axes, groups/time points/antigens included, any legend information, etc. \\label{fig:example_fig}", fig.scap = "Shorter caption for table of contents.", fig.align="center"}
-
-library(ggplot2)
-qplot(1:10,rnorm(10))
+ compareGroups::export2latex(compareGroups::createTable(overall_compare), size = 'small', label = 'tab:Overall-Table', caption = 'Overall Descriptive Statistics')
 ```
 
 
 
-```{r example_tab, results="asis"}
-kable(mtcars, format = "latex", caption = "A simple table")
+
+```{r Variable-of-Interest-Table, results="asis"}
+
+compareGroups::export2latex(pretty_pvalue_compareGroups(compareGroups::createTable(cycles_compare, digits.p = 4, show.p.mul = T), digits = 4), size = 'footnotesize', label = 'tab:Variable-of-Interest-Table', caption = 'Comparing Variables to Number of Cycles', header.labels = c('p.overall' = 'Overall P'), landscape = F)
+
+```
+
+
+
+\clearpage
+
+
+```{r ElixSumplots, fig.cap="Elix Sum Relationship with Number of Cycles \\label{fig:Elix_Sum_plots}", fig.height=4, fig.width=6}
+# Should set seed since using geom_jitter
+set.seed(5254264)
+ggplot(Analytical_Data, aes(x = factor(Cycles, levels = 3:4), y = Elix_Sum, color =  factor(Cycles, levels = 3:4))) +
+  geom_boxplot(outlier.colour = NA, show.legend = FALSE) + 
+  geom_jitter(size = 2, position = position_jitter(height = 0, width = .25), show.legend = FALSE) +
+  xlab('Number of Cycles') + 
+  scale_y_continuous("Sum of Elixhauser Comorbidities", breaks = seq(0,9,by = 1)) +
+  theme_bw() + theme(axis.text = element_text(size = 12),axis.title.x = element_text(size = 10), strip.text = element_text(size = 12), legend.position = "bottom", legend.box = "horizontal")
+
+```
+
+
+\clearpage 
+
+```{r Binary-Outcome-Table, results="asis"}
+
+compareGroups::export2latex(pretty_pvalue_compareGroups(compareGroups::createTable(PT0N0_compare, digits.p = 4, show.p.mul = T), digits = 4), size = 'small', label = 'tab:Binary-Outcome-Table', caption = 'Comparing Variables to Downstaged to pT0N0', header.labels = c('p.overall' = 'Overall P'), landscape = F)
 ```
 
 \clearpage 
 
-```{r session_info_table, results = 'asis'}
 
-# loading in rmarkdown so we can capture verison number
-if (any(installed.packages()[,1] == 'rmarkdown')) suppressWarnings(library(rmarkdown))
-# loading in MoffittTemplates so we can capture verison number
-if (any(installed.packages()[,1] == 'MoffittTemplates')) suppressWarnings(library(MoffittTemplates))
+```{r Unadjusted-Logistic-Table, results="asis"}
+
+# Note if you have variables with the extra same levels you may have to set row_group_label_position = 'identity' to compile
+
+kable(PT0N0_unadj_fit_table, 'latex', escape = F, longtable = T, booktabs = TRUE, linesep = '', caption = 'Univariate Logistic Regression Model Results for Downstaged to pT0N0') %>% 
+  collapse_rows(c(1:2), row_group_label_position = 'stack', headers_to_remove = 1:2, latex_hline = 'major') %>%
+  footnote(number = c('OR are odds of Downstaged to pT0N0 = Complete Response'))
+```
+
+```{r Adjusted-Logistic-Table, results="asis"}
+
+# Note if you have variables with the extra same levels you may have to set row_group_label_position = 'identity' to compile
+
+kable(PT0N0_adj_fit_table %>% select(-n), 'latex', escape = F, longtable = T, booktabs = TRUE, linesep = '', caption = 'Multivariable Logistic Regression Model Results for Downstaged to pT0N0') %>% 
+  collapse_rows(c(1:2), row_group_label_position = 'stack', headers_to_remove = 1:2, latex_hline = 'major') %>%
+  footnote(number = c('OR are odds of Downstaged to pT0N0 = Complete Response', paste0('Model sample size is ', 
+           PT0N0_adj_fit_table %>% select(n) %>% slice(1))))
+```
+
+
+\clearpage 
+
+
+```{r KM-Table, results="asis"}
+
+kable(OS_KM_fit_table, 'latex', escape = F, longtable = T, booktabs = TRUE, linesep = '', caption = 'Kaplan–Meier Results for Overall Survival') %>% 
+  collapse_rows(c(1:2), row_group_label_position = 'stack', headers_to_remove = 1:2, latex_hline = 'major') %>%
+  kable_styling(font_size = 9) %>% 
+  footnote(number = c('N.E. = Not Estimable'))
+```
+
+```{r Unadjusted-Cox-Table, results="asis"}
+
+# Note if you have variables with the extra same levels you may have to set row_group_label_position = 'identity' to compile
+
+kable(OS_unadj_fit_table, 'latex', escape = F, longtable = T, booktabs = TRUE, linesep = '', caption = 'Univariate Cox Proportional-Hazards Regression Models for Overall Survival') %>% 
+  collapse_rows(c(1:2), row_group_label_position = 'stack', headers_to_remove = 1:2, latex_hline = 'major') %>%
+  footnote(number = c('HR are odds of Death'))
+```
+
+```{r Adjusted-Cox-Table, results="asis"}
+
+# Note if you have variables with the extra same levels you may have to set row_group_label_position = 'identity' to compile
+
+kable(OS_adj_fit_table %>% select(-`n (events)`), 'latex', escape = F, longtable = T, booktabs = TRUE, linesep = '', caption = 'Multivariable Cox Proportional-Hazards Regression Model for Overall Survival') %>% 
+  collapse_rows(c(1:2), row_group_label_position = 'stack', headers_to_remove = 1:2, latex_hline = 'major') %>%
+  footnote(number = c('HR are odds of Death', paste0('Model sample size (events) is ', 
+           OS_adj_fit_table %>% select(`n (events)`) %>% slice(1))))
+```
 
 
 
-### Chunk to create reproducibility tables
+\clearpage 
 
-# get username
-getUsername <- function(id=NULL){
-  switch(Sys.info()[['sysname']],
-    Windows = {
-      if (is.null(id)) {id <- Sys.getenv("USERNAME")}
-      myargs <- paste("user /domain", id)
-      user <- tryCatch({system2(command = "net", args = myargs, stdout = TRUE)},
-                       warning = function(w){NULL},
-                       error = function(e){NULL})
-      user <- gsub("Full Name\ *", "", user[grepl("FULL NAME", toupper(user))])
-      if (length(user) > 0) {
-        user <- paste(strsplit(gsub(",", "", user), " ")[[1]][c(2, 1)], collapse = " ")
-      } else {
-        stop("No userid ", id, " was found.")
-      }
-    },
-    Linux   = {
-      if (is.null(id)) {id <- Sys.getenv("USER")}
-      myargs <- paste0("-h mcc_ldap.hlm.ad.moffitt.usf.edu -b dc=hlm,dc=ad,dc=moffitt,dc=usf,dc=edu uid=", id)
-      user <- system2("ldapsearch", args = myargs, stdout = TRUE)
-      user <- user[grep("cn:", user)]
-      if (length(user) > 0) {
-        user <- gsub("[a-z]+: ", "", user)
-      } else {
-        stop("No userid ", id, " was found.")
-      }
-    },
-    Darwin  = {
-      if (is.null(id)) {id <- Sys.getenv("USER")}
-      myargs <- paste0("-h mcc_ldap.hlm.ad.moffitt.usf.edu -b dc=hlm,dc=ad,dc=moffitt,dc=usf,dc=edu uid=", id)
-      user <- system2("ldapsearch", args = myargs, stdout = TRUE)
-      user <- user[grep("cn:", user)]
-      if (length(user) > 0) {
-        user <-  paste(strsplit(gsub(",", "", gsub("[a-z]+: ", "", user)), " ")[[1]][c(2, 1)], collapse = " ")
-      } else {
-        stop("No userid ", id, " was found.")
-      }
-    }
-  )
 
-  return(user)
-}
-username <- ifelse(getUsername() == "0 Success", Sys.getenv("USER"), getUsername())
+<!-- KM Plots -->
 
-# User must have devtools installed
-  if (!'devtools' %in% installed.packages()[,1]) 
-    install.packages('devtools', dependencies = TRUE,repos = "http://cran.us.r-project.org")
-my_session_info <- devtools::session_info()
 
-platform <- my_session_info[[1]]
-packages <- my_session_info[[2]]
+```{r KM-Plot-Var-of-Interest, fig.height=6, fig.cap="Overall Survival Kaplan–Meier Curves by Number of Cycles \\label{fig:km_cycles}"}
 
-# TABLE 1
-my_session_info1 <- data.frame(
-  name = names(platform),
-  value = matrix(unlist(platform), nrow = length(platform)), 
-  stringsAsFactors = FALSE)
+cycles_KM_fit <- survfit(surv_months_obj ~ Cycles_cat, data = Analytical_Data)
 
-my_current_input <- ifelse(is.null(ci <- knitr::current_input()), 'No Input File Detected', ci)
-my_current_input_w_dir <- ifelse(is.null(ci <- knitr::current_input(dir = TRUE)), 'No Input File Detected', ci)
-
-file_name <-  data.frame(
-  name = 'file name',
-  value = my_current_input,
-  stringsAsFactors = FALSE)
-
-# Add user info
-user_info <- data.frame(
-  name = 'user',
-  value = username,
-  stringsAsFactors = FALSE)
-
-gitremote <-  substr(remote <- suppressWarnings(system("git remote -v", intern = TRUE))[1],
-                     regexpr("\t", remote) + 1,
-                     regexpr(" ", remote) - 1)
-
-if (is.na(gitremote) || gitremote == "" || grepl('fatal', gitremote)) {
-  # No Remote Connection, so just give absolute path
-  folder_info <- data.frame(
-    name = 'location',
-    value = ifelse(my_current_input_w_dir != 'No Input File Detected', dirname(my_current_input_w_dir), getwd()),
-  stringsAsFactors = FALSE)
-  my_session_info1 <- rbind(my_session_info1, folder_info, file_name, user_info)
-} else{
-  if (my_current_input_w_dir != 'No Input File Detected') {
-    
-  all_git_files <- system('git ls-files -co --no-empty-directory --full-name', intern = TRUE)
-  folder_info_in <- dirname(all_git_files[unlist(lapply(all_git_files, function(xx) grepl(xx, my_current_input_w_dir)))])
-     
-  } else {
-    folder_info_in <- 'No Location Detected'
-  }
-  
-
-  # Dropping matching file names that do not match folder path
-  folder_info <- data.frame(
-    name = 'location',
-    value = folder_info_in,
-  stringsAsFactors = FALSE)
-  
-  url_info <- data.frame(
-    name = 'repo',
-    value = gitremote,
-  stringsAsFactors = FALSE)
-  
-  my_session_info1 <- rbind(my_session_info1, url_info, folder_info, file_name, user_info)
-}
-
-kableExtra::kable(my_session_info1, 'latex', row.names = F, booktabs = TRUE, linesep = '', caption = "Supplemental Table: Reproducibility Software Session Information") %>% kableExtra::kable_styling(font_size = 7)
-
+ggsurvplot(cycles_KM_fit, data = Analytical_Data, pval = TRUE, risk.table = TRUE, ggtheme = theme_classic(),risk.table.col = "strata",  legend.labs = levels(Analytical_Data$Cycles_cat), break.x.by = 12, xlab = 'Survival Months', censor.size = 4.5, ncensor.plot = FALSE, pval.method = T, legend.title = '   Number \n of Cycles', legend = c(.10, .25), pval.coord = c(20, .15), pval.method.coord = c(20, .2))
 
 ```
 
-```{r session_info2, results = 'asis'}
 
-# TABLE 2
-# Need to split up code based on devtools version:
-devtools_version <-  packageVersion('devtools')
-if (numeric_version(devtools_version) >= '2.0.0') {
-my_session_info2 <- packages[packages$attached,] # Only want attached packages
-my_session_info2 <- data.frame(package = my_session_info2$package, 
-                               version = my_session_info2$loadedversion, 
-                               date = my_session_info2$date, 
-                               source = my_session_info2$source) 
-} else {
-  my_session_info2 <- packages[packages$`*` == '*', -2]
-  names(my_session_info2) <- names(packages)[-2]
-}
-# 
-# # Adding in Data Versions
-# if (nrow(my_session_info2) > 0) {
-#   for (i in 1:nrow(my_session_info2)) {
-#     my_session_info2$data.version[i] <- as.character(packageDescription(my_session_info2$package[i], fields = 'DataVersion'))
-#   }
-# }
-# 
-# if (all(is.na(my_session_info2$data.version))) {
-#   my_session_info2 <- my_session_info2[, c('package', 'version', 'date', 'source')]
-# } else {
-#   is.na(my_session_info2$data.version) <- ''
-#   my_session_info2 <- my_session_info2[, c('package', 'version', 'data.version', 'date', 'source')]
-# }
 
-# if this is a vignette in a package, add the data package without loading it
-if (grepl("vignettes", getwd()) & file.exists('../DESCRIPTION')) {
-  thisRow <- my_session_info2[1, ,drop = FALSE]
-  rd <- roxygen2:::read.description("../DESCRIPTION")
-  thisRow <- data.frame(package = rd$Package,
-               version = rd$Version,
-               `data version` = rd$DataVersion,
-               date = rd$Date,
-               source = url_info$value,
-               stringsAsFactors = FALSE)
 
-# if local repo path is too long, break it into two lines
-# (this assumes that it doesn't need to wrap to 3 lines)
-if (nchar(thisRow$source) > 60) {
-  slashes <- gregexpr("/", thisRow$source, fixed = TRUE)[[1]]
-  p1 <- substr(thisRow$source, 1, slashes[which(slashes > 30)][1])
-  p2 <- substr(thisRow$source, slashes[which(slashes > 30)][1] + 1, 500)
-  newsource <- gsub("_", "\\_", paste0(p1, " \\\\ \n", p2), fixed = TRUE)
-  thisRow$source <- paste0("\\parbox[t]{3in}{", newsource, "}")
-}
 
-my_session_info2 <- rbind(my_session_info2, thisRow)
-my_session_info2 <- my_session_info2[, c('package', 'version', 'data.version', 'date', 'source')]
-}
 
-kableExtra::kable(my_session_info2, 'latex', row.names = F, booktabs = TRUE, linesep = '', caption = "Supplemental Table: Reproducibility Software Package Version Information") %>% kableExtra::kable_styling(font_size = 7)
+\clearpage 
+
+```{r Software-Session-Information, results = 'asis'}
+### Chunk to create reproducibility tables
+# loading in rmarkdown and MoffittTemplates so we can capture verison number
+if (any(installed.packages()[,1] == 'rmarkdown')) suppressWarnings(library(rmarkdown))
+if (any(installed.packages()[,1] == 'MoffittTemplates')) suppressWarnings(library(MoffittTemplates))
+
+my_session_info <- get_session_info()
+
+kableExtra::kable(my_session_info$platform_table, 'latex', booktabs = TRUE, 
+      linesep = '', caption = "Reproducibility Software Session Information") %>% 
+      kableExtra::kable_styling(font_size = 8)
+
+```
+
+```{r Software-Package-Version-Information, results = 'asis'}
+
+kableExtra::kable(my_session_info$packages_table, 'latex', booktabs = TRUE, 
+      linesep = '', caption = "Reproducibility Software Package Version Information") %>% 
+      kableExtra::kable_styling(font_size = 8)
 
 ```
 
