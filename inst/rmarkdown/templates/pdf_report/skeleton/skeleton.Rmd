@@ -361,6 +361,8 @@ kable(PT0N0_unadj_fit_table, 'latex', escape = F, longtable = T, booktabs = TRUE
   footnote(number = c('OR are odds of Downstaged to pT0N0 = Complete Response'))
 ```
 
+\clearpage
+
 ```{r Adjusted-Logistic-Table, results="asis"}
 
 # Note if you have variables with the extra same levels you may have to set row_group_label_position = 'identity' to compile
@@ -383,6 +385,8 @@ kable(OS_KM_fit_table, 'latex', escape = F, longtable = T, booktabs = TRUE, line
   footnote(number = c('N.E. = Not Estimable'))
 ```
 
+\clearpage
+
 ```{r Unadjusted-Cox-Table, results="asis"}
 
 # Note if you have variables with the extra same levels you may have to set row_group_label_position = 'identity' to compile
@@ -391,6 +395,8 @@ kable(OS_unadj_fit_table, 'latex', escape = F, longtable = T, booktabs = TRUE, l
   collapse_rows(c(1:2), row_group_label_position = 'stack', headers_to_remove = 1:2, latex_hline = 'major') %>%
   footnote(number = c('HR are odds of Death'))
 ```
+
+\clearpage
 
 ```{r Adjusted-Cox-Table, results="asis"}
 
