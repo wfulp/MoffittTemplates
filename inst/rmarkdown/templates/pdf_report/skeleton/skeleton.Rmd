@@ -316,6 +316,7 @@ There were no significant differences between any factors and number of cycles, 
 ```
 
 
+\clearpage
 
 
 ```{r Variable-of-Interest-Table, results="asis"}
