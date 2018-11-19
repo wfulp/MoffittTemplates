@@ -1,0 +1,102 @@
+---
+title: "Title of Your Submission"
+author: 'Author(s) Here'
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: 
+  powerpoint_presentation:
+    reference_doc: moffitt_powerpoint_styles.pptx
+    keep_md: true
+---
+
+
+```{r setup, echo=FALSE, eval=TRUE, include = FALSE}
+# various options needing to be set
+options(xtable.comment = FALSE, datatable.verbose = FALSE, scipen = 10, knitr.kable.NA = '', knitr.table.format = 'latex')   
+
+### Add additional packages needed here
+packages = c('ggplot2', "knitr","kableExtra", "MoffittFunctions")
+
+#if a package is installed, it will be loaded
+#if any are not, the missing package(s) will be installed and loaded
+package.check <- lapply(packages, FUN = function(x) {
+  if (!require(x, character.only = TRUE)) {
+    # MoffittFunctions must be installed in seperately (not in CRAN)
+    if (x == 'MoffittFunctions')
+      stop('The package "MoffittFunctions" must be installed through GitLab: git@gitlab.moffitt.usf.edu:ReproducibleResearch/MoffittFunctions.git')
+    
+    install.packages(x, dependencies = TRUE,repos = "http://cran.us.r-project.org")
+  }
+  library(x, character.only = TRUE)
+})
+
+if (numeric_version(packageVersion('MoffittFunctions')) < '0.1.2')
+  stop('MoffittFunctions must be at least version "0.1.2"')
+
+# Set some knitr options
+# This will always generate two figures (pdf and png, which can be handy for presentations)
+# Note it is bad practice to globally set warning = F. Only set this for chunks you have confirmed warnings have been considered
+opts_chunk$set(tidy = TRUE, cache = FALSE, messages = TRUE, warning = TRUE, echo = FALSE, dev = c("png", "pdf"), dpi = 200)
+
+
+# Create a theme
+# This can be overloaded with other options
+moffitt_theme <- theme(legend.position = "bottom", legend.margin = margin(unit = "cm"))
+
+```
+
+# In the morning
+
+## Getting up
+
+- Turn off alarm
+- Get out of bed
+
+## Breakfast
+
+- Eat eggs
+- Drink coffee
+
+# In the evening
+
+## Dinner
+
+- Eat spaghetti
+- Drink wine
+
+# Awesome Plot
+
+```{r, cars, fig.cap="A scatterplot.", echo=FALSE}
+plot(cars)
+```
+
+## Going to sleep
+
+- Get in bed
+- Count sheep
+
+# Software-Session-Information
+
+```{r Software-Session-Information, results = 'asis'}
+### Chunk to create reproducibility tables
+# loading in rmarkdown and MoffittTemplates so we can capture verison number
+if (any(installed.packages()[,1] == 'rmarkdown')) suppressWarnings(library(rmarkdown))
+if (any(installed.packages()[,1] == 'MoffittTemplates')) suppressWarnings(library(MoffittTemplates))
+
+my_session_info <- get_session_info()
+
+kableExtra::kable(my_session_info$platform_table, 'pandoc')
+
+```
+
+# Software-Package-Version-Information
+
+
+```{r Software-Package-Version-Information, results = 'asis'}
+
+kableExtra::kable(my_session_info$packages_table, 'pandoc', booktabs = TRUE)
+
+```
+
+
+
+# References
