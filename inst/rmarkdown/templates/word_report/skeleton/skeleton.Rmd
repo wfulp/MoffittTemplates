@@ -409,7 +409,7 @@ ggsurvplot(cycles_KM_fit, data = Analytical_Data, pval = TRUE, risk.table = TRUE
 
 #####
 
-```{r Software-Session-Information, results = 'asis',eval=F}
+```{r Software-Session-Information, results = 'asis'}
 ### Chunk to create reproducibility tables
 # loading in rmarkdown and MoffittTemplates so we can capture verison number
 if (any(installed.packages()[,1] == 'rmarkdown')) suppressWarnings(library(rmarkdown))
@@ -424,7 +424,7 @@ kableExtra::kable(my_session_info$platform_table, 'pandoc', caption = "Reproduci
 <br><br> 
 
 
-```{r Software-Package-Version-Information, results = 'asis',eval=F}
+```{r Software-Package-Version-Information, results = 'asis'}
 
 kableExtra::kable(my_session_info$packages_table, 'pandoc', caption = "Reproducibility Software Package Version Information")
 
