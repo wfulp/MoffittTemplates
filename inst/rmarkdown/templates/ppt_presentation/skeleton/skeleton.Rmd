@@ -29,8 +29,8 @@ package.check <- lapply(packages, FUN = function(x) {
   library(x, character.only = TRUE)
 })
 
-if (numeric_version(packageVersion('MoffittFunctions')) < '0.1.2')
-  stop('MoffittFunctions must be at least version "0.1.2"')
+if (numeric_version(packageVersion('MoffittFunctions')) < '0.1.21')
+  stop('MoffittFunctions must be at least version "0.1.21"')
 
 # Set some knitr options
 # This will always generate two figures (pdf and png, which can be handy for presentations)
