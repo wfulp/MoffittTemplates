@@ -4,22 +4,22 @@ shorttitle: "Short Title"
 from:
  - name: FirstNameA LastNameA
    email: foo@bar.com
-   contact: yes
+   contact: true
  - name: FirstNameB LastNameB
 to:
  - name: FirstNameA LastNameA
  - name: FirstNameB LastNameB
-includecc: no
+includecc: false
 cc:
  - name: FirstNameA LastNameA
  - name: FirstNameB LastNameB
-includesummary: no
+includesummary: false
 summary: 
   A short summary about your report. 
 bibliography: bibliography.bib
-lof: yes
-lot: yes
-toc: yes
+lof: true
+lot: true
+toc: true
 output: MoffittTemplates::pdf_report
 ---
 
@@ -44,8 +44,8 @@ package.check <- lapply(packages, FUN = function(x) {
   library(x, character.only = TRUE)
 })
 
-if (numeric_version(packageVersion('MoffittFunctions')) < '0.1.2')
-  stop('MoffittFunctions must be at least version "0.1.2"')
+if (numeric_version(packageVersion('MoffittFunctions')) < '0.1.21')
+  stop('MoffittFunctions must be at least version "0.1.21"')
 
 # Set some knitr options
 # This will always generate two figures (pdf and png, which can be handy for presentations)
@@ -148,11 +148,11 @@ vars_to_run <- c('Cycles_cat','Age_At_Diagnosis', 'Gender', 'Marital_Status',  '
 PT0N0_unadj_fit_table <- purrr::map_dfr(
   vars_to_run, run_pretty_model_output, model_data = Analytical_Data, 
   y_in = 'PT0N0', event_in = NULL, event_level = 'Complete Response', 
-  latex_output = TRUE)
+  output_type = 'latex')
 
 PT0N0_adj_fit_table <- run_pretty_model_output(
   x_in = vars_to_run, model_data = Analytical_Data, y_in = 'PT0N0', 
-  event_in = NULL, event_level = 'Complete Response', latex_output = TRUE)
+  event_in = NULL, event_level = 'Complete Response', output_type = 'latex')
 
 
 
@@ -174,7 +174,7 @@ OS_KM_fit_table <- map_dfr(
   c(NA,setdiff(vars_to_run, c('Age_At_Diagnosis','Elix_Sum'))), run_pretty_km_output, 
   model_data = Analytical_Data,  time_in = 'Survival_Months', event_in = 'Vital_Status', event_level = 'Dead', 
   time_est = c(24,60), surv_est_prefix = 'Month', p_digits = 5, 
-  latex_output = TRUE) %>% 
+  output_type = 'latex') %>% 
   select(Group, Level, everything())
 
 
@@ -183,12 +183,12 @@ OS_KM_fit_table <- map_dfr(
 OS_unadj_fit_table <- map_dfr(
   vars_to_run, run_pretty_model_output, model_data = Analytical_Data, 
   y_in = 'Survival_Months', event_in = 'Vital_Status', event_level = 'Dead', 
-  latex_output = TRUE)
+  output_type = 'latex')
 
 # Multivariable model
 OS_adj_fit_table <- run_pretty_model_output(
   x_in = vars_to_run, model_data = Analytical_Data, y_in = 'Survival_Months', 
-  event_in = 'Vital_Status', event_level = 'Dead', latex_output = TRUE)
+  event_in = 'Vital_Status', event_level = 'Dead', output_type = 'latex')
 
 ```
 
