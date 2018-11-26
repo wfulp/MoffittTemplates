@@ -7,6 +7,11 @@ PDF and Word templates for Moffitt reports
 First make sure you have SSH keys set up, then type:
 
 ```r
+# If installing from GitHub
+remotes::install_git("https://github.com/wfulp/MoffittTemplates", build_opts = NULL)
+
+
+# If installing from Moffitt GitLab
 cred = git2r::cred_ssh_key(
 	publickey = "MYPATH/.ssh/id_rsa.pub", 
 	privatekey = "MYPATH/.ssh/id_rsa")
