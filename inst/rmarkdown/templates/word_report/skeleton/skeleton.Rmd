@@ -5,7 +5,7 @@ date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: 
   bookdown::word_document2:
     toc: true
-    fig_caption: yes
+    fig_caption: true
     fig_height: 7
     fig_width: 6
     reference_docx: word-styles-reference.docx
@@ -130,7 +130,7 @@ PT0N0_unadj_fit_table <- purrr::map_dfr(
 
 PT0N0_adj_fit_table <- run_pretty_model_output(
   x_in = vars_to_run, model_data = Analytical_Data, y_in = 'PT0N0', 
-  event_in = NULL, event_level = 'Complete Response', latex_output = FALSE)
+  event_in = NULL, event_level = 'Complete Response')
 
 
 
@@ -166,7 +166,7 @@ OS_unadj_fit_table <- map_dfr(
 # Multivariable model
 OS_adj_fit_table <- run_pretty_model_output(
   x_in = vars_to_run, model_data = Analytical_Data, y_in = 'Survival_Months', 
-  event_in = 'Vital_Status', event_level = 'Dead', latex_output = FALSE)
+  event_in = 'Vital_Status', event_level = 'Dead')
 
 ```
 
