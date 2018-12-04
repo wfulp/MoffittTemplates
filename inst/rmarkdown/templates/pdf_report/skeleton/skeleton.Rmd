@@ -359,6 +359,7 @@ compareGroups::export2latex(pretty_pvalue_compareGroups(compareGroups::createTab
 
 kable(PT0N0_unadj_fit_table, 'latex', escape = F, longtable = T, booktabs = TRUE, linesep = '', caption = 'Univariate Logistic Regression Model Results for Downstaged to pT0N0') %>% 
   collapse_rows(c(1:2), row_group_label_position = 'stack', headers_to_remove = 1:2, latex_hline = 'major') %>%
+  kable_styling(font_size = 9.5, latex_options = c("repeat_header")) %>%
   footnote(number = c('OR are odds of Downstaged to pT0N0 = Complete Response'))
 ```
 
@@ -370,6 +371,7 @@ kable(PT0N0_unadj_fit_table, 'latex', escape = F, longtable = T, booktabs = TRUE
 
 kable(PT0N0_adj_fit_table %>% select(-n), 'latex', escape = F, longtable = T, booktabs = TRUE, linesep = '', caption = 'Multivariable Logistic Regression Model Results for Downstaged to pT0N0') %>% 
   collapse_rows(c(1:2), row_group_label_position = 'stack', headers_to_remove = 1:2, latex_hline = 'major') %>%
+  kable_styling(font_size = 9.5, latex_options = c("repeat_header")) %>%
   footnote(number = c('OR are odds of Downstaged to pT0N0 = Complete Response', paste0('Model sample size is ', 
            PT0N0_adj_fit_table %>% select(n) %>% slice(1))))
 ```
@@ -380,9 +382,10 @@ kable(PT0N0_adj_fit_table %>% select(-n), 'latex', escape = F, longtable = T, bo
 
 ```{r KM-Table, results="asis"}
 
-kable(OS_KM_fit_table, 'latex', escape = F, longtable = T, booktabs = TRUE, linesep = '', caption = 'Kaplan–Meier Results for Overall Survival') %>% 
+kable(OS_KM_fit_table, 'latex', escape = F, longtable = T, booktabs = TRUE, linesep = '', 
+      caption = 'Kaplan–Meier Results for Overall Survival') %>% 
   collapse_rows(c(1:2), row_group_label_position = 'stack', headers_to_remove = 1:2, latex_hline = 'major') %>%
-  kable_styling(font_size = 9) %>% 
+  kable_styling(font_size = 9, latex_options = c("repeat_header")) %>%
   footnote(number = c('N.E. = Not Estimable'))
 ```
 
@@ -393,6 +396,7 @@ kable(OS_KM_fit_table, 'latex', escape = F, longtable = T, booktabs = TRUE, line
 # Note if you have variables with the extra same levels you may have to set row_group_label_position = 'identity' to compile
 
 kable(OS_unadj_fit_table, 'latex', escape = F, longtable = T, booktabs = TRUE, linesep = '', caption = 'Univariate Cox Proportional-Hazards Regression Models for Overall Survival') %>% 
+  kable_styling(font_size = 9.5, latex_options = c("repeat_header")) %>%
   collapse_rows(c(1:2), row_group_label_position = 'stack', headers_to_remove = 1:2, latex_hline = 'major') %>%
   footnote(number = c('HR are odds of Death'))
 ```
@@ -404,6 +408,7 @@ kable(OS_unadj_fit_table, 'latex', escape = F, longtable = T, booktabs = TRUE, l
 # Note if you have variables with the extra same levels you may have to set row_group_label_position = 'identity' to compile
 
 kable(OS_adj_fit_table %>% select(-`n (events)`), 'latex', escape = F, longtable = T, booktabs = TRUE, linesep = '', caption = 'Multivariable Cox Proportional-Hazards Regression Model for Overall Survival') %>% 
+  kable_styling(font_size = 9.5, latex_options = c("repeat_header")) %>%
   collapse_rows(c(1:2), row_group_label_position = 'stack', headers_to_remove = 1:2, latex_hline = 'major') %>%
   footnote(number = c('HR are odds of Death', paste0('Model sample size (events) is ', 
            OS_adj_fit_table %>% select(`n (events)`) %>% slice(1))))
