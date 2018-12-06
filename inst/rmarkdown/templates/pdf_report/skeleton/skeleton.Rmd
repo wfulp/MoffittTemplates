@@ -240,7 +240,7 @@ Patients receiving neoadjuvant gemcitabine/cisplatin (GC) chemo.
 
 \textcolor{green}{Example Description:}
 
-Patient characteristics were summarized using descriptive statistics including median and range for continuous measures and proportions and frequencies for categorical measures. When comparing characteristics to histology the median and $25^{th}$ and $75^{th}$ percentiles are shown for continuous variables. The association between continuous variables and histology were assessed using Kruskal-Wallis tests. The associations between categorical variables and three endpoints were evaluated using Chi-squared tests or Fisher’s exact tests when the expected frequencies is less than 5 in some cell. Categorical variable levels for overall survival will be compared using the Log-rank test.
+Patient characteristics were summarized using descriptive statistics including median and range for continuous measures and proportions and frequencies for categorical measures. When comparing characteristics to histology the median and $25^{th}$ and $75^{th}$ percentiles are shown for continuous variables. The association between continuous variables and histology were assessed using Kruskal-Wallis tests. The associations between categorical variables and three endpoints were evaluated using Chi-squared tests or Fisher's exact tests when the expected frequencies is less than 5 in some cell. Categorical variable levels for overall survival will be compared using the Log-rank test.
 
 Logistic regression models were fit for the endpoints Downstaged to pT0N0 (No/Yes), and Cox Proportional Hazard models were fit for overall survival. Unadjusted and adjusted (multivariable) models were run for Histology and relevant covariates. Odds ratios (or Hazard ratios for Cox models), with 95% confidence intervals, and p values are presented. For categorical variables with more than two levels, p values are presented for each level compared to a referent level, and also an overall p value using the type-III analysis-of-variance result for the respective model.
 
@@ -256,7 +256,7 @@ Due to the exploratory nature of this analysis p-values were not adjusted for mu
 
 Distributions of continuous factors will be plotted for each outcome value, with box plots superimposed on the distributions. The mid-line of the box denotes the median and the ends of the box denote the $25^{th}$ and $75^{th}$ percentiles. The whiskers denote the most extreme data points that are no more than 1.5 times the interquartile range (i.e., height of the box). 
 
-Kaplan–Meier curves will be drawn for overall survival comparing selected categorical variables, along with number at risk along the x-axis.
+Kaplan-Meier curves will be drawn for overall survival comparing selected categorical variables, along with number at risk along the x-axis.
 
 # Results
 
@@ -299,13 +299,13 @@ There were no significant differences between any factors and number of cycles, 
 
 ### Overall Survival
 
-*Table \ref{tab:KM-Table} is an example of a table comparing Kaplan–Meier Results overall and for multiple variables*
+*Table \ref{tab:KM-Table} is an example of a table comparing Kaplan-Meier Results overall and for multiple variables*
 
 *Table \ref{tab:Unadjusted-Cox-Table} is an example of univariate Cox Proportional-Hazards Regression Models*
 
 *Table \ref{tab:Adjusted-Cox-Table} is an example of a multivariable Cox Proportional-Hazards Regression Model*
 
-*Figure \ref{fig:km_cycles} is an example of a figure showing Kaplan–Meier curves by a categorical variable*
+*Figure \ref{fig:km_cycles} is an example of a figure showing Kaplan-Meier curves by a categorical variable*
 
 
 # Figures and Tables
@@ -383,7 +383,7 @@ kable(PT0N0_adj_fit_table %>% select(-n), 'latex', escape = F, longtable = T, bo
 ```{r KM-Table, results="asis"}
 
 kable(OS_KM_fit_table, 'latex', escape = F, longtable = T, booktabs = TRUE, linesep = '', 
-      caption = 'Kaplan–Meier Results for Overall Survival') %>% 
+      caption = 'Kaplan-Meier Results for Overall Survival') %>% 
   collapse_rows(c(1:2), row_group_label_position = 'stack', headers_to_remove = 1:2, latex_hline = 'major') %>%
   kable_styling(font_size = 9, latex_options = c("repeat_header")) %>%
   footnote(number = c('N.E. = Not Estimable'))
@@ -422,7 +422,7 @@ kable(OS_adj_fit_table %>% select(-`n (events)`), 'latex', escape = F, longtable
 <!-- KM Plots -->
 
 
-```{r KM-Plot-Var-of-Interest, fig.height=6, fig.cap="Overall Survival Kaplan–Meier Curves by Number of Cycles \\label{fig:km_cycles}"}
+```{r KM-Plot-Var-of-Interest, fig.height=6, fig.cap="Overall Survival Kaplan-Meier Curves by Number of Cycles \\label{fig:km_cycles}"}
 
 cycles_KM_fit <- survfit(surv_months_obj ~ Cycles_cat, data = Analytical_Data)
 
