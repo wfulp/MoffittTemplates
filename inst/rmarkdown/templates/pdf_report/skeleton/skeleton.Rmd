@@ -69,7 +69,7 @@ pretty_pvalue_compareGroups <- function(compareGroups_table_obj, digits = 3, sig
     temp_values <- compareGroups_table_obj$descr[,i]
     temp_values[temp_values == '.'] <- ''
     numeric_values <- as.numeric(sub('<', '', temp_values))
-    compareGroups_table_obj$descr[,i] <- pretty_pvalues(numeric_values, digits = digits, sig_alpha = sig_alpha, background = background)
+    compareGroups_table_obj$descr[,i] <- pretty_pvalues(numeric_values, digits = digits, sig_alpha = sig_alpha, background = background, missing_char = '')
   }
   compareGroups_table_obj
 }
