@@ -50,7 +50,7 @@ if (numeric_version(packageVersion('MoffittFunctions')) < '0.1.21')
 # Set some knitr options
 # This will always generate two figures (pdf and png, which can be handy for presentations)
 # Note it is bad practice to globally set warning = F. Only set this for chunks you have confirmed warnings have been considered
-opts_chunk$set(tidy = TRUE, cache = FALSE, messages = TRUE, warning = TRUE, echo = FALSE, dev = c("png", "pdf"), dpi = 200)
+opts_chunk$set(tidy = TRUE, cache = FALSE, messages = TRUE, warning = TRUE, echo = FALSE, dev = c("png", "pdf"), dpi = 200, out.width = '100%')
 
 
 # Create a theme
