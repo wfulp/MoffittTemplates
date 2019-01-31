@@ -310,7 +310,7 @@ There were no significant differences between any factors and number of cycles, 
 
 # Figures and Tables
 
-```{r Overall-Table, results="asis"}
+```{r Overall-Table, results="asis", warning=FALSE}
 
  compareGroups::export2latex(compareGroups::createTable(overall_compare), size = 'small', label = 'tab:Overall-Table', caption = 'Overall Descriptive Statistics')
 ```
@@ -319,7 +319,7 @@ There were no significant differences between any factors and number of cycles, 
 \clearpage
 
 
-```{r Variable-of-Interest-Table, results="asis"}
+```{r Variable-of-Interest-Table, results="asis", warning=FALSE}
 
 compareGroups::export2latex(pretty_pvalue_compareGroups(compareGroups::createTable(cycles_compare, digits.p = 4, show.p.mul = T), digits = 4), size = 'footnotesize', label = 'tab:Variable-of-Interest-Table', caption = 'Comparing Variables to Number of Cycles', header.labels = c('p.overall' = 'Overall P'), landscape = F)
 
@@ -345,7 +345,7 @@ ggplot(Analytical_Data, aes(x = factor(Cycles, levels = 3:4), y = Elix_Sum, colo
 
 \clearpage 
 
-```{r Binary-Outcome-Table, results="asis"}
+```{r Binary-Outcome-Table, results="asis", warning=FALSE}
 
 compareGroups::export2latex(pretty_pvalue_compareGroups(compareGroups::createTable(PT0N0_compare, digits.p = 4, show.p.mul = T), digits = 4), size = 'small', label = 'tab:Binary-Outcome-Table', caption = 'Comparing Variables to Downstaged to pT0N0', header.labels = c('p.overall' = 'Overall P'), landscape = F)
 ```
@@ -437,7 +437,7 @@ ggsurvplot(cycles_KM_fit, data = Analytical_Data, pval = TRUE, risk.table = TRUE
 
 \clearpage 
 
-```{r Software-Session-Information, results = 'asis'}
+```{r Software-Session-Information, results = 'asis', message = FALSE}
 ### Chunk to create reproducibility tables
 # loading in rmarkdown and MoffittTemplates so we can capture verison number
 if (any(installed.packages()[,1] == 'rmarkdown')) suppressWarnings(library(rmarkdown))

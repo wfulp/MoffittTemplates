@@ -125,8 +125,7 @@ vars_to_run <- c('Cycles_cat','Age_At_Diagnosis', 'Gender', 'Marital_Status',  '
 ## PT0N0 logistic fits
 PT0N0_unadj_fit_table <- purrr::map_dfr(
   vars_to_run, run_pretty_model_output, model_data = Analytical_Data, 
-  y_in = 'PT0N0', event_in = NULL, event_level = 'Complete Response', 
-  latex_output = FALSE)
+  y_in = 'PT0N0', event_in = NULL, event_level = 'Complete Response')
 
 PT0N0_adj_fit_table <- run_pretty_model_output(
   x_in = vars_to_run, model_data = Analytical_Data, y_in = 'PT0N0', 
@@ -151,8 +150,7 @@ vars_to_run <- c('Cycles_cat','Age_At_Diagnosis', 'Gender', 'Marital_Status', 'E
 OS_KM_fit_table <- map_dfr(
   c(NA,setdiff(vars_to_run, c('Age_At_Diagnosis','Elix_Sum'))), run_pretty_km_output, 
   model_data = Analytical_Data,  time_in = 'Survival_Months', event_in = 'Vital_Status', event_level = 'Dead', 
-  time_est = c(24,60), surv_est_prefix = 'Month', p_digits = 5, 
-  latex_output = FALSE) %>% 
+  time_est = c(24,60), surv_est_prefix = 'Month', p_digits = 5) %>% 
   select(Group, Level, everything())
 
 
@@ -160,8 +158,7 @@ OS_KM_fit_table <- map_dfr(
 # Unadjusted Models
 OS_unadj_fit_table <- map_dfr(
   vars_to_run, run_pretty_model_output, model_data = Analytical_Data, 
-  y_in = 'Survival_Months', event_in = 'Vital_Status', event_level = 'Dead', 
-  latex_output = FALSE)
+  y_in = 'Survival_Months', event_in = 'Vital_Status', event_level = 'Dead')
 
 # Multivariable model
 OS_adj_fit_table <- run_pretty_model_output(
@@ -291,7 +288,7 @@ There were no significant differences between any factors and number of cycles, 
 
 # Figures and Tables
 
-```{r Overall-Table, results="asis"}
+```{r Overall-Table, results="asis", warning=FALSE}
 
   compareGroups::export2md(compareGroups::createTable(overall_compare), caption = 'Overall Descriptive Statistics', format = 'markdown')
 ```
@@ -300,7 +297,7 @@ There were no significant differences between any factors and number of cycles, 
 #####
 
 
-```{r Variable-of-Interest-Table, results="asis"}
+```{r Variable-of-Interest-Table, results="asis", warning=FALSE}
 
 compareGroups::export2md(compareGroups::createTable(cycles_compare, digits.p = 4, show.p.mul = T), caption = 'Comparing Variables to Number of Cycles', header.labels = c('p.overall' = 'Overall P'), format = 'markdown')
 
@@ -326,7 +323,7 @@ ggplot(Analytical_Data, aes(x = factor(Cycles, levels = 3:4), y = Elix_Sum, colo
 
 #####
 
-```{r Binary-Outcome-Table, results="asis"}
+```{r Binary-Outcome-Table, results="asis", warning=FALSE}
 
 compareGroups::export2md(compareGroups::createTable(PT0N0_compare, digits.p = 4, show.p.mul = T), size = 'small', label = 'tab:Binary-Outcome-Table', caption = 'Comparing Variables to Downstaged to pT0N0', header.labels = c('p.overall' = 'Overall P'), landscape = F, format = 'markdown')
 ```
