@@ -60,22 +60,6 @@ moffitt_theme <- theme(legend.position = "bottom", legend.margin = margin(unit =
 ```
 
 
-```{r}
-
-pretty_pvalue_compareGroups <- function(compareGroups_table_obj, digits = 3, sig_alpha = 0.05, background = 'yellow'){
-  vars_to_adjust <- colnames(compareGroups_table_obj$descr)[grep('p\\.', colnames(compareGroups_table_obj$descr))]
-
-  for (i in vars_to_adjust) {
-    temp_values <- compareGroups_table_obj$descr[,i]
-    temp_values[temp_values == '.'] <- ''
-    numeric_values <- as.numeric(sub('<', '', temp_values))
-    compareGroups_table_obj$descr[,i] <- pretty_pvalues(numeric_values, digits = digits, sig_alpha = sig_alpha, background = background, missing_char = '')
-  }
-  compareGroups_table_obj
-}
-
-```
-
 
 ```{r data_process}
 #loading data (this is example data from MoffittFunctions)
@@ -321,7 +305,7 @@ There were no significant differences between any factors and number of cycles, 
 
 ```{r Variable-of-Interest-Table, results="asis", warning=FALSE}
 
-compareGroups::export2latex(pretty_pvalue_compareGroups(compareGroups::createTable(cycles_compare, digits.p = 4, show.p.mul = T), digits = 4), size = 'footnotesize', label = 'tab:Variable-of-Interest-Table', caption = 'Comparing Variables to Number of Cycles', header.labels = c('p.overall' = 'Overall P'), landscape = F)
+compareGroups::export2latex(pretty_pvalues_compareGroups(compareGroups::createTable(cycles_compare, digits.p = 4, show.p.mul = T), digits = 4, output_type = 'latex', background = 'yellow'), size = 'footnotesize', label = 'tab:Variable-of-Interest-Table', caption = 'Comparing Variables to Number of Cycles', header.labels = c('p.overall' = 'Overall P'), landscape = F)
 
 ```
 
@@ -347,7 +331,7 @@ ggplot(Analytical_Data, aes(x = factor(Cycles, levels = 3:4), y = Elix_Sum, colo
 
 ```{r Binary-Outcome-Table, results="asis", warning=FALSE}
 
-compareGroups::export2latex(pretty_pvalue_compareGroups(compareGroups::createTable(PT0N0_compare, digits.p = 4, show.p.mul = T), digits = 4), size = 'small', label = 'tab:Binary-Outcome-Table', caption = 'Comparing Variables to Downstaged to pT0N0', header.labels = c('p.overall' = 'Overall P'), landscape = F)
+compareGroups::export2latex(pretty_pvalues_compareGroups(compareGroups::createTable(PT0N0_compare, digits.p = 4, show.p.mul = T), digits = 4, output_type = 'latex', background = 'yellow'), size = 'small', label = 'tab:Binary-Outcome-Table', caption = 'Comparing Variables to Downstaged to pT0N0', header.labels = c('p.overall' = 'Overall P'), landscape = F)
 ```
 
 \clearpage 

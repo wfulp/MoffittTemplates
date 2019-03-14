@@ -1,14 +1,18 @@
 Package: MoffittTemplates
 Type: Package
 Title: A report template for Moffitt Biostat
-Version: 0.1.51.2
-Date: 2018-11-19
-Author: William "Jimmy" Fulp
-Maintainer: William "Jimmy" Fulp <william.fulp@moffitt.org>
+Version: 1.0.0
+Authors@R: c(person("Jimmy", "Fulp",  email = "William.Fulp@moffitt.org", role = c("aut", "cre")),
+             person("Ram", "Thapa",  email = "Ram.Thapa@moffitt.org", role = "aut"),
+             person("Zachary", "Thompson",  email = "Zachary.Thompson@moffitt.org", role = "aut")
+             )
+Authors: William (Jimmy) Fulp, Ram Thapa, Zachary Thompson
 Description: MoffittTemplates -- Moffitt Biostat
-License: What license is it under?
+License: GPL-3
+LazyData: true
 Collate: utils.R
   pdf_report.R
 Imports:
     rmarkdown
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.1
+Encoding: UTF-8
